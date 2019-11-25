@@ -33,6 +33,8 @@ using v3u = glm::uvec3;
 //#define OPTICK_ENABLE_GPU_D3D12  false
 //#include "optick/optick.h"
 #include "stb/stb_image.h"
+#include <DeviceINQ.h>
+#include <BTSerialPortBinding.h>
 #include <cstdlib>
 #include <string>
 using std::string;

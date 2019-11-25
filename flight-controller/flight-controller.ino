@@ -90,7 +90,7 @@ void loop()
                       &v3Gyro.x, &v3Gyro.y, &v3Gyro.z);
     compass.getHeading(&v3Compass.x, &v3Compass.y, &v3Compass.z);
     const float heading = atan2(v3Compass.y, v3Compass.x);
-    Serial.print(v3Accel.x);        Serial.print("\t");
+    /*Serial.print(v3Accel.x);        Serial.print("\t");
     Serial.print(v3Accel.y);        Serial.print("\t");
     Serial.print(v3Accel.z);        Serial.print("\t");
     Serial.print(v3Gyro.x);         Serial.print("\t");
@@ -99,7 +99,7 @@ void loop()
     Serial.print(v3Compass.x);      Serial.print("\t");
     Serial.print(v3Compass.y);      Serial.print("\t");
     Serial.print(v3Compass.z);      Serial.print("\t");
-    Serial.print(heading*180/M_PI); Serial.print("\t\n");
+    Serial.print(heading*180/M_PI); Serial.print("\t\n");*/
     bluetooth.print(v3Accel.x);        bluetooth.print("\t");
     bluetooth.print(v3Accel.y);        bluetooth.print("\t");
     bluetooth.print(v3Accel.z);        bluetooth.print("\t");
