@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <K10_INCLUDE_DIRECTORIES>$(SDL_HOME_X64)\include\SDL2;$(GLEW_HOME)\include;$(ASSIMP_HOME)\include;$(BLUETOOTH_SERIAL_HOME)\include</K10_INCLUDE_DIRECTORIES>
+    <K10_LIBRARY_DIRECTORIES>$(SDL_HOME_X64)\lib;$(GLEW_HOME)\lib\Release\x64;$(ASSIMP_HOME)\lib;$(BULLET_HOME)\lib</K10_LIBRARY_DIRECTORIES>
+    <K10_LIBRARIES_RELEASE>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;glu32.lib;assimp-vc142-mt.lib;bluetoothserialport.lib;Ws2_32.Lib;bthprops.lib</K10_LIBRARIES_RELEASE>
+    <K10_LIBRARIES_DEBUG>SDL2d.lib;SDL2maind.lib;glew32.lib;opengl32.lib;glu32.lib;assimp-vc142-mtd.lib;bluetoothserialport.lib;Ws2_32.Lib;bthprops.lib</K10_LIBRARIES_DEBUG>
+    <K10_BINARY_DIRECTORIES>$(SDL_HOME_X64)\bin;$(GLEW_HOME)\bin\Release\x64;$(ASSIMP_HOME)\bin</K10_BINARY_DIRECTORIES>
+    <K10_LIBRARY_DIRECTORIES_RELEASE>$(BLUETOOTH_SERIAL_HOME)\lib\Release</K10_LIBRARY_DIRECTORIES_RELEASE>
+    <K10_LIBRARY_DIRECTORIES_DEBUG>$(BLUETOOTH_SERIAL_HOME)\lib\Debug</K10_LIBRARY_DIRECTORIES_DEBUG>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="K10_INCLUDE_DIRECTORIES">
+      <Value>$(K10_INCLUDE_DIRECTORIES)</Value>
+    </BuildMacro>
+    <BuildMacro Include="K10_LIBRARY_DIRECTORIES">
+      <Value>$(K10_LIBRARY_DIRECTORIES)</Value>
+    </BuildMacro>
+    <BuildMacro Include="K10_LIBRARIES_RELEASE">
+      <Value>$(K10_LIBRARIES_RELEASE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="K10_LIBRARIES_DEBUG">
+      <Value>$(K10_LIBRARIES_DEBUG)</Value>
+    </BuildMacro>
+    <BuildMacro Include="K10_BINARY_DIRECTORIES">
+      <Value>$(K10_BINARY_DIRECTORIES)</Value>
+    </BuildMacro>
+    <BuildMacro Include="K10_LIBRARY_DIRECTORIES_RELEASE">
+      <Value>$(K10_LIBRARY_DIRECTORIES_RELEASE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="K10_LIBRARY_DIRECTORIES_DEBUG">
+      <Value>$(K10_LIBRARY_DIRECTORIES_DEBUG)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

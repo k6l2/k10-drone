@@ -1,0 +1,15 @@
+-Create a simple breadboard circuit connecting Arduino Uno + sparkfun bluesmirf silver + GY-87
+-[ARDUINO FLIGHT CONTROLLER] communication & programming of the bluesmirf
+-[ARDUINO FLIGHT CONTROLLER] read GY-87 output and print the output to Serial & bluetooth just to see if it's working
+-[PC APPLICATION] SDL2 window
+-[PC APPLICATION] OpenGL 4.6 context
+-[PC APPLICATION] ImGUI
+--------------------------- DONE ----------------------------------------------
+-[PC APPLICATION] connect to bluetooth device and facilitate serial I/O
+-[PC APPLICATION] read GY-87 data from the drone and display using GUI
+-[PC APPLICATION] test remote programming of the bluesmirf
+-[ARDUINO FLIGHT CONTROLLER] pack the GY-87 data into binary instead of ASCII text
+-[PC APPLICATION] decode binary telemetry
+-[PC APPLICATION] create origin mesh
+-[PC APPLICATION] orbit camera around the origin, control w/ mouse (click+drag)
+-[PC APPLICATION] visualize compass heading using a white 3D vector
