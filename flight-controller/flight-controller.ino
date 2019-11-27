@@ -71,7 +71,7 @@ void setup()
   Serial.print("Accellerometer/Gyro connection... ");
   Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
   // in order to use the HMC5883L, we need to enable an I2C bypass
-  //motion.setI2CBypassEnabled(true);
+  motion.setI2CBypassEnabled(true);
   // initialize the HMC5883L chip on the GY-87
   compass.initialize();
   Serial.print("Compass connection............... ");

@@ -14,6 +14,7 @@ vector<device> currentDeviceList;
 char const* selectedBtConnectDevice = nullptr;
 string      selectedBtConnectAddress;
 vector<char> currentRawTelemetry;
+SDL_cond* btMgrLockConditionVar = nullptr;
 int main(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0)
@@ -21,7 +22,17 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 	defer(SDL_Quit());
+	btMgrLockConditionVar = SDL_CreateCond();
+	if (!btMgrLockConditionVar)
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+					 "Failed to create condition variable: '%s'\n", 
+					 SDL_GetError());
+		return EXIT_FAILURE;
+	}
+	defer(SDL_DestroyCond(btMgrLockConditionVar));
 	btManager.initialize();
+	defer(btManager.free());
 	if (!k10::initializeGlobalVariables())
 	{
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
@@ -63,8 +74,7 @@ int main(int argc, char** argv)
 			}break;
 			}
 		}
-		btManager.lock();
-		//TODO: copy latest list of devices from the BluetoothManager
+		btManager.lock(btMgrLockConditionVar);
 		const Time frameTime = frameTimer.restart();
 //		const Time appTime = totalApplicationTimer.getElapsedTime();
 		if (k10::input->actionPressed("quickExit") &&
@@ -184,7 +194,8 @@ int main(int argc, char** argv)
 			}
 		}	break;
 		}
-		btManager.unlock();
+		btManager.unlock(btMgrLockConditionVar);
+		SDL_Delay(15);
 		k10::window->swapBuffer();
 	}
 	return EXIT_SUCCESS;

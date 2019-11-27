@@ -10,8 +10,8 @@ class BluetoothManager
 public:
 	void initialize();
 	void free();
-	void lock();
-	void unlock();
+	void lock(SDL_cond* conditionVariable);
+	void unlock(SDL_cond* conditionVariable);
 	bool bluetoothSerialConnected() const;
 	void requestDeviceInquiry();
 	bool isQueryingForDevices() const;
@@ -26,6 +26,7 @@ private:
 	// Thread data ////////////////////////////////////////////////////////////
 	SDL_Thread* thread = nullptr;
 	OrderedLock orderedThreadLock;
+	SDL_cond* btMgrLockConditionVar;
 	bool threadRunning = false;
 	// Bluetooth data /////////////////////////////////////////////////////////
 	DeviceINQ* devInq = nullptr;

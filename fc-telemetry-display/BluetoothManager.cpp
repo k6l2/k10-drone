@@ -5,6 +5,14 @@ void BluetoothManager::initialize()
 	free();
 	devInq = DeviceINQ::Create();
 	threadRunning = true;
+	btMgrLockConditionVar = SDL_CreateCond();
+	if (!btMgrLockConditionVar)
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+					 "Failed to create condition variable: '%s'\n", 
+					 SDL_GetError());
+		SDL_assert(false);
+	}
 	if (!orderedThreadLock.initialize())
 	{
 		SDL_assert(false);
@@ -26,19 +34,24 @@ void BluetoothManager::free()
 	}
 	thread = nullptr;
 	orderedThreadLock.free();
+	if (btMgrLockConditionVar)
+	{
+		SDL_DestroyCond(btMgrLockConditionVar);
+	}
+	btMgrLockConditionVar = nullptr;
 	if (devInq)
 	{
 		delete devInq;
 	}
 	devInq = nullptr;
 }
-void BluetoothManager::lock()
+void BluetoothManager::lock(SDL_cond* conditionVariable)
 {
-	orderedThreadLock.lock();
+	orderedThreadLock.lock(conditionVariable);
 }
-void BluetoothManager::unlock()
+void BluetoothManager::unlock(SDL_cond* conditionVariable)
 {
-	orderedThreadLock.unlock();
+	orderedThreadLock.unlock(conditionVariable);
 }
 bool BluetoothManager::bluetoothSerialConnected() const
 {
@@ -84,7 +97,7 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 		static_cast<BluetoothManager*>(pBluetoothManager);
 	while (true)
 	{
-		btm->orderedThreadLock.lock();
+		btm->orderedThreadLock.lock(btm->btMgrLockConditionVar);
 		if (!btm->threadRunning)
 		{
 			return 0;
@@ -92,6 +105,7 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 		const bool doDeviceInquery = btm->deviceInquiryRequested;
 		const string requestedDevAddr = 
 			btm->btSerial ? "" : btm->requestedDeviceAddress;
+		btm->orderedThreadLock.unlock(btm->btMgrLockConditionVar);
 		if (btm->btSerial)
 		{
 			static const size_t TEMP_BUFF_SIZE = 1024;
@@ -109,6 +123,7 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 			}
 			if (numBytesRead > 0)
 			{
+				btm->orderedThreadLock.lock(btm->btMgrLockConditionVar);
 				for (int c = 0; c < numBytesRead; c++)
 				{
 					btm->rawTelemetry.push_back(telemetryTempBuff[c]);
@@ -122,16 +137,16 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 											btm->rawTelemetry.begin() + excessSize);
 				}
 				btm->newRawTelemetryBytes += numBytesRead;
+				btm->orderedThreadLock.unlock(btm->btMgrLockConditionVar);
 			}
 		}
-		btm->orderedThreadLock.unlock();
 		if (doDeviceInquery)
 		{
 			vector<device> const devices = btm->devInq->Inquire();
-			btm->orderedThreadLock.lock();
+			btm->orderedThreadLock.lock(btm->btMgrLockConditionVar);
 			btm->devices                = devices;
 			btm->deviceInquiryRequested = false;
-			btm->orderedThreadLock.unlock();
+			btm->orderedThreadLock.unlock(btm->btMgrLockConditionVar);
 		}
 		else if (requestedDevAddr != "")
 		{
@@ -163,12 +178,13 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 					delete btSerial; btSerial = nullptr;
 				}
 			}
-			btm->orderedThreadLock.lock();
+			btm->orderedThreadLock.lock(btm->btMgrLockConditionVar);
 			btm->btSerial				= btSerial;
 			btm->requestedDeviceAddress = "";
 			btm->newRawTelemetryBytes   = 0;
 			btm->rawTelemetry.clear();
-			btm->orderedThreadLock.unlock();
+			btm->orderedThreadLock.unlock(btm->btMgrLockConditionVar);
 		}
+		SDL_Delay(15);
 	}
 }

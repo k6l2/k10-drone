@@ -6,11 +6,9 @@ class OrderedLock
 public:
 	bool initialize();
 	void free();
-	bool lock();
-	bool unlock();
-	//bool isLocked() const;
+	bool lock(SDL_cond* conditionVariable);
+	bool unlock(SDL_cond* conditionVariable);
 private:
 	queue<SDL_cond*> conditionQ;
 	SDL_mutex* orderedMutex = nullptr;
-	bool locked = false;
 };
