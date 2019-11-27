@@ -6,6 +6,8 @@
 -[PC APPLICATION] ImGUI
 -[PC APPLICATION] connect to bluetooth device and facilitate serial I/O
 -[PC APPLICATION] read GY-87 data from the drone and display using GUI
+-[PC APPLICATION] move bluetooth device inquiry to a separate thread
+-[PC APPLICATION] move bluetooth socket I/O to a separate thread
 --------------------------- DONE ----------------------------------------------
 -[PC APPLICATION] test remote programming of the bluesmirf
 -[ARDUINO FLIGHT CONTROLLER] pack the GY-87 data into binary instead of ASCII text

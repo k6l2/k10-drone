@@ -2,20 +2,18 @@
 #include "Timer.h"
 #include "Input.h"
 #include "GuiDebugFrameMetrics.h"
-#include <BluetoothException.h>
-DeviceINQ* const devInq = DeviceINQ::Create();
-vector<device> devices;
-BTSerialPortBinding* btSerial = nullptr;
+#include "BluetoothManager.h"
+BluetoothManager btManager;
 enum class ApplicationState : u8
 {
 	DEFAULT,
 	CONNECTING_TO_BLUETOOTH_DEVICE
 };
 ApplicationState appState = ApplicationState::DEFAULT;
+vector<device> currentDeviceList;
 char const* selectedBtConnectDevice = nullptr;
-string selectedBtConnectAddress;
-static const size_t MAX_RAW_TELEMETRY_BUFFER_SIZE = 1000000;
-vector<char> rawTelemetry;
+string      selectedBtConnectAddress;
+vector<char> currentRawTelemetry;
 int main(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0)
@@ -23,6 +21,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 	defer(SDL_Quit());
+	btManager.initialize();
 	if (!k10::initializeGlobalVariables())
 	{
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
@@ -35,7 +34,7 @@ int main(int argc, char** argv)
 					 "Failed to load global assets!\n");
 		return EXIT_FAILURE;
 	}
-	Timer totalApplicationTimer;
+//	Timer totalApplicationTimer;
 	Timer frameTimer;
 	while (k10::window->isOpen())
 	{
@@ -64,8 +63,10 @@ int main(int argc, char** argv)
 			}break;
 			}
 		}
+		btManager.lock();
+		//TODO: copy latest list of devices from the BluetoothManager
 		const Time frameTime = frameTimer.restart();
-		const Time appTime = totalApplicationTimer.getElapsedTime();
+//		const Time appTime = totalApplicationTimer.getElapsedTime();
 		if (k10::input->actionPressed("quickExit") &&
 			k10::input->actionHeld("quickExitActive"))
 		{
@@ -77,25 +78,22 @@ int main(int argc, char** argv)
 		const bool enableMenuItems = (appState == ApplicationState::DEFAULT);
 		if (ImGui::BeginMainMenuBar())
 		{
-			if (btSerial)
+			if (btManager.bluetoothSerialConnected())
 			{
-				//TODO: disconnect
+				if (ImGui::MenuItem("Disconnect", nullptr, nullptr, enableMenuItems))
+				{
+					SDL_assert(false);
+					//TODO
+				}
 			}
 			else
 			{
 				if (ImGui::MenuItem("Connect", nullptr, nullptr, enableMenuItems))
 				{
+					currentDeviceList.clear();
+					selectedBtConnectAddress = "";
 					selectedBtConnectDevice = nullptr;
-					SDL_Log("Querying bluetooth devices...\n");
-					devices = devInq->Inquire();
-					for (auto const& d : devices)
-					{
-						if (!selectedBtConnectDevice)
-						{
-							selectedBtConnectDevice = d.name.c_str();
-						}
-						SDL_Log("device '%s' @ '%s'\n", d.name.c_str(), d.address.c_str());
-					}
+					btManager.requestDeviceInquiry();
 					appState = ApplicationState::CONNECTING_TO_BLUETOOTH_DEVICE;
 				}
 			}
@@ -104,106 +102,89 @@ int main(int argc, char** argv)
 		switch (appState)
 		{
 		case ApplicationState::DEFAULT: {
-			if (btSerial)
+			if (btManager.bluetoothSerialConnected())
 			{
-				static const size_t TEMP_BUFF_SIZE = 1024;
-				char telemetryTempBuff[TEMP_BUFF_SIZE];
-				int numBytesRead;
-				try
-				{
-					numBytesRead = btSerial->Read(telemetryTempBuff, 
-												  TEMP_BUFF_SIZE);
-				}
-				catch (BluetoothException const& bte)
-				{
-					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-						"Read FAILURE! BluetoothException='%s'\n", bte.what());
-				}
-				if (numBytesRead > 0)
-				{
-					for (int c = 0; c < numBytesRead; c++)
-					{
-						rawTelemetry.push_back(telemetryTempBuff[c]);
-					}
-					if (rawTelemetry.size() > MAX_RAW_TELEMETRY_BUFFER_SIZE)
-					{
-						size_t const excessSize = 
-							rawTelemetry.size() - MAX_RAW_TELEMETRY_BUFFER_SIZE;
-						rawTelemetry.erase(rawTelemetry.begin(), 
-										   rawTelemetry.begin() + excessSize);
-					}
-				}
+				currentRawTelemetry = btManager.getRawTelemetry();
 				ImGui::Begin("Raw Telemetry");
-				ImGui::TextUnformatted(rawTelemetry.data(), 
-									   rawTelemetry.data() + rawTelemetry.size());
-				if (numBytesRead > 0)
+				if (!currentRawTelemetry.empty())
+				{
+					ImGui::TextUnformatted(currentRawTelemetry.data(), 
+										   currentRawTelemetry.data() + 
+												currentRawTelemetry.size());
+				}
+				if (btManager.extractNewTelemetryByteCount() > 0)
 				{
 					ImGui::SetScrollHereY(1.f);
 				}
 				ImGui::End();
-				//TODO: console interface with the modem
 			}
+			//TODO: console interface with the modem
 		}	break;
 		case ApplicationState::CONNECTING_TO_BLUETOOTH_DEVICE: {
-			bool open;
+			bool open = true;
 			ImGui::Begin("Connect to Bluetooth Device", &open);
-			if (ImGui::BeginCombo("devices", selectedBtConnectDevice))
+			if (btManager.isQueryingForDevices())
 			{
-				for (auto const& d : devices)
-				{
-					bool isSelected = (selectedBtConnectDevice == d.name.c_str());
-					if (ImGui::Selectable(d.name.c_str(), isSelected))
-					{
-						selectedBtConnectDevice = d.name.c_str();
-						selectedBtConnectAddress = d.address;
-					}
-					if (isSelected)
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndCombo();
+				ImGui::Text("Scanning bluetooth devices... %c", 
+							"|/-\\"[(int)(ImGui::GetTime() / 0.05f) & 3]);
 			}
-			if (ImGui::Button("Connect"))
+			else
 			{
-				try
+				if (currentDeviceList.empty())
 				{
-					SDL_Log("Binding to address '%s'...", selectedBtConnectAddress.c_str());
-					btSerial = BTSerialPortBinding::Create(selectedBtConnectAddress, 1);
-					SDL_Log("SUCCESS!\n");
+					currentDeviceList = btManager.getDeviceList();
 				}
-				catch (BluetoothException const& bte)
+				if (currentDeviceList.empty())
 				{
-					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-						"FAILURE! BluetoothException='%s'\n", bte.what());
-				}
-				if (btSerial)
-				{
-					try
+					if (ImGui::Button("Scan For Bluetooth"))
 					{
-						SDL_Log("Connecting to '%s'...", selectedBtConnectDevice);
-						btSerial->Connect();
-						SDL_Log("SUCCESS!\n");
-					}
-					catch (BluetoothException const& bte)
-					{
-						SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-							"FAILURE! BluetoothException='%s'\n", bte.what());
-						delete btSerial; btSerial = nullptr;
+						currentDeviceList.clear();
+						selectedBtConnectAddress = "";
+						selectedBtConnectDevice = nullptr;
+						btManager.requestDeviceInquiry();
 					}
 				}
-				if (btSerial)
+				else if (btManager.isRequestingBtConnection())
 				{
-					open = false;
+					ImGui::Text("Connecting to '%s'... %c",
+								selectedBtConnectDevice,
+								"|/-\\"[(int)(ImGui::GetTime() / 0.05f) & 3]);
+				}
+				else
+				{
+					if (ImGui::BeginCombo("devices", selectedBtConnectDevice))
+					{
+						for (auto const& d : currentDeviceList)
+						{
+							bool isSelected = (selectedBtConnectDevice == d.name.c_str());
+							if (ImGui::Selectable(d.name.c_str(), isSelected))
+							{
+								selectedBtConnectDevice  = d.name.c_str();
+								selectedBtConnectAddress = d.address;
+							}
+							if (isSelected)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndCombo();
+					}
+					if (!btManager.isRequestingBtConnection() &&
+						ImGui::Button("Connect"))
+					{
+						btManager.requestBluetoothConnection(
+							selectedBtConnectAddress);
+					}
 				}
 			}
 			ImGui::End();
-			if (!open)
+			if (!open || btManager.bluetoothSerialConnected())
 			{
 				appState = ApplicationState::DEFAULT;
 			}
 		}	break;
 		}
+		btManager.unlock();
 		k10::window->swapBuffer();
 	}
 	return EXIT_SUCCESS;
