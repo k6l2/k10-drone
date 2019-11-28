@@ -1,5 +1,6 @@
 #include "TelemetryVisualizer3D.h"
 #include "Window.h"
+#include "Input.h"
 bool TelemetryVisualizer3D::init()
 {
 	if (!uboGlobalUniformBlock.create(GfxBuffer::BufferTarget::UNIFORMS,
@@ -43,6 +44,9 @@ void TelemetryVisualizer3D::free()
 }
 void TelemetryVisualizer3D::step(bool droneTelemetryConnected)
 {
+	camera.yaw  (k10::input->axis("camLookYaw"  ) * 0.002f);
+	camera.pitch(k10::input->axis("camLookPitch") * 0.002f);
+	camera.setPosition(camera.getWorldForward() * -cameraOrbitDistance);
 	// populate a GlobalMatrixBlock uniform buffer which is bound to global 
 	//	OpenGL context //
 	{

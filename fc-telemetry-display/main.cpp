@@ -58,6 +58,7 @@ int main(int argc, char** argv)
 	Timer frameTimer;
 	while (k10::window->isOpen())
 	{
+		Timer currentFrameSleepTimer;
 		SDL_Event sdlEvent;
 		k10::input->step();
 		while (SDL_PollEvent(&sdlEvent))
@@ -205,7 +206,19 @@ int main(int argc, char** argv)
 		}	break;
 		}
 		btManager.unlock(btMgrLockConditionVar);
-		SDL_Delay(15);
+		// Attempt to intelligently sleep the render thread under the 
+		//	assumption that buffer swap is relatively fast //
+		{
+			const i32 elapsedMs = k10::OS_SCHEDULING_OVERHEAD_MS +
+				currentFrameSleepTimer.getElapsedTime().milliseconds();
+			const int refreshRate = k10::window->getRefreshRate();
+			const i32 targetMs = k10::window->isVSyncEnabled() ?
+				1000 / refreshRate : k10::FIXED_FRAME_TIME.milliseconds();
+			if (elapsedMs < targetMs)
+			{
+				SDL_Delay(targetMs - elapsedMs);
+			}
+		}
 		k10::window->swapBuffer();
 	}
 	return EXIT_SUCCESS;

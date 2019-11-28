@@ -14,7 +14,8 @@ private:
 	};
 private:
 	GfxBuffer uboGlobalUniformBlock;
-	Camera camera = Camera(v3f(25,25,25), v3f(0,0,0));
+	float cameraOrbitDistance = 25;
+	Camera camera = Camera(glm::normalize(v3f(1,1,1))* cameraOrbitDistance, v3f(0,0,0));
 	GfxBuffer vboOriginMesh;
 };
 

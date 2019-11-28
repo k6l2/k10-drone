@@ -1,5 +1,6 @@
 #include "BluetoothManager.h"
 #include <BluetoothException.h>
+#include "Timer.h"
 void BluetoothManager::initialize()
 {
 	free();
@@ -97,6 +98,7 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 		static_cast<BluetoothManager*>(pBluetoothManager);
 	while (true)
 	{
+		Timer simulationFrameTimer;
 		btm->orderedThreadLock.lock(btm->btMgrLockConditionVar);
 		if (!btm->threadRunning)
 		{
@@ -185,6 +187,11 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 			btm->rawTelemetry.clear();
 			btm->orderedThreadLock.unlock(btm->btMgrLockConditionVar);
 		}
-		SDL_Delay(15);
+		const i32 elapsedMs = k10::OS_SCHEDULING_OVERHEAD_MS +
+						  simulationFrameTimer.getElapsedTime().milliseconds();
+		if (elapsedMs < k10::FIXED_FRAME_TIME.milliseconds())
+		{
+			SDL_Delay(k10::FIXED_FRAME_TIME.milliseconds() - elapsedMs);
+		}
 	}
 }

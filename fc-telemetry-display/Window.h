@@ -12,6 +12,8 @@ public:
 	void swapBuffer();
 	v2i getSize() const;
 	void setMouseGrabbed(bool value) const;
+	int getRefreshRate() const;
+	bool isVSyncEnabled() const;
 private:
 	SDL_Window* window = nullptr;
 	SDL_GLContext context = nullptr;

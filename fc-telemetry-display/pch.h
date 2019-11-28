@@ -60,6 +60,7 @@ namespace k10
 {
 	// GLOBAL CONSTANTS ///////////////////////////////////////////////////////
 	static const Time FIXED_FRAME_TIME = Time::seconds(1.f / 60);
+	static const i32 OS_SCHEDULING_OVERHEAD_MS = 1;
 	static const float PI = glm::pi<float>();
 	static const GLint SHADER_BINARY_FORMAT = GL_SHADER_BINARY_FORMAT_SPIR_V;
 	static const v3f FORWARD  = {  0, -1,  0 };

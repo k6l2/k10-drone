@@ -223,3 +223,17 @@ void Window::setMouseGrabbed(bool value) const
 {
 	SDL_SetWindowGrab(window, value ? SDL_TRUE : SDL_FALSE);
 }
+int Window::getRefreshRate() const
+{
+	SDL_DisplayMode displayMode;
+	if (SDL_GetWindowDisplayMode(window, &displayMode) != 0)
+	{
+		SDL_assert(false); return 0;
+	}
+	return displayMode.refresh_rate;
+}
+bool Window::isVSyncEnabled() const
+{
+	const int swapInterval = SDL_GL_GetSwapInterval();
+	return swapInterval == 1;
+}

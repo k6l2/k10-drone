@@ -10,8 +10,8 @@
 -[PC APPLICATION] move bluetooth socket I/O to a separate thread
 -[PC APPLICATION] create origin mesh
 -[PC APPLICATION] draw 3D model of the drone
---------------------------- DONE ----------------------------------------------
 -[PC APPLICATION] orbit camera around the origin, control w/ mouse (click+drag)
+--------------------------- DONE ----------------------------------------------
 -[PC APPLICATION] test remote programming of the bluesmirf
 -[ARDUINO FLIGHT CONTROLLER] pack the GY-87 data into binary instead of ASCII text
 -[PC APPLICATION] decode binary telemetry
