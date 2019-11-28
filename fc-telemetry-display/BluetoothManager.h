@@ -20,6 +20,7 @@ public:
 	bool isRequestingBtConnection() const;
 	vector<char> const& getRawTelemetry() const;
 	size_t extractNewTelemetryByteCount();
+	void sendData(char const* data, size_t size);
 private:
 	static int bluetoothManagerThreadMain(void* pBluetoothManager);
 private:
@@ -37,4 +38,5 @@ private:
 	static const size_t MAX_RAW_TELEMETRY_BUFFER_SIZE = 1000000;
 	vector<char> rawTelemetry;
 	size_t newRawTelemetryBytes = 0;
+	vector<char> telemetrySendBuffer;
 };

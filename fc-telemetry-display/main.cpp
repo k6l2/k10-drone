@@ -96,7 +96,6 @@ int main(int argc, char** argv)
 		k10::window->clear(Color(30, 30, 30));
 		visualizer3d.step(btManager.bluetoothSerialConnected());
 		k10::guiDebugFrameMetrics->drawImGuiFrameMetrics(frameTime);
-		ImGui::ShowDemoWindow();
 		// Main Menu GUI //
 		const bool enableMenuItems = (appState == ApplicationState::DEFAULT);
 		if (ImGui::BeginMainMenuBar())
@@ -158,9 +157,9 @@ int main(int argc, char** argv)
 									 IM_ARRAYSIZE(bluetoothInputBuffer), 
 									 ImGuiInputTextFlags_EnterReturnsTrue))
 				{
-					//TODO: console interface with the modem
+					btManager.sendData(bluetoothInputBuffer, 
+									   strlen(bluetoothInputBuffer));
 					strcpy_s(bluetoothInputBuffer, "");
-					//bluetoothInputBuffer[0] = '\n';
 					reclaimInputFocus = true;
 				}
 				// the console input should be this window's default focus item

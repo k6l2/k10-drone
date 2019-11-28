@@ -92,6 +92,23 @@ size_t BluetoothManager::extractNewTelemetryByteCount()
 	newRawTelemetryBytes = 0;
 	return retVal;
 }
+void BluetoothManager::sendData(char const* data, size_t size)
+{
+	for (size_t c = 0; c < size; c++)
+	{
+		if (telemetrySendBuffer.size() >= MAX_RAW_TELEMETRY_BUFFER_SIZE)
+		{
+			SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+						 "telemetrySendBuffer overflow!\n");
+			SDL_assert(false); return;
+		}
+		telemetrySendBuffer.push_back(data[c]);
+	}
+	if (!(size == 3 && strcmp(data, "$$$") == 0))
+	{
+		telemetrySendBuffer.push_back('\n');
+	}
+}
 int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 {
 	BluetoothManager* const btm = 
@@ -107,12 +124,13 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 		const bool doDeviceInquery = btm->deviceInquiryRequested;
 		const string requestedDevAddr = 
 			btm->btSerial ? "" : btm->requestedDeviceAddress;
+		vector<char> telemetrySendBuffer = btm->telemetrySendBuffer;
 		btm->orderedThreadLock.unlock(btm->btMgrLockConditionVar);
 		if (btm->btSerial)
 		{
 			static const size_t TEMP_BUFF_SIZE = 1024;
 			char telemetryTempBuff[TEMP_BUFF_SIZE];
-			int numBytesRead;
+			int numBytesRead = 0;
 			try
 			{
 				numBytesRead = btm->btSerial->Read(telemetryTempBuff,
@@ -141,6 +159,29 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 				btm->newRawTelemetryBytes += numBytesRead;
 				btm->orderedThreadLock.unlock(btm->btMgrLockConditionVar);
 			}
+			if (!telemetrySendBuffer.empty())
+			{
+				int numBytesWritten = 0;
+				try
+				{
+					numBytesWritten = 
+						btm->btSerial->Write(telemetrySendBuffer.data(), 
+											 static_cast<int>(telemetrySendBuffer.size()));
+				}
+				catch (BluetoothException const& bte)
+				{
+					SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+						"Write FAILURE! BluetoothException='%s'\n", bte.what());
+				}
+				if (numBytesWritten > 0)
+				{
+					btm->orderedThreadLock.lock(btm->btMgrLockConditionVar);
+					btm->telemetrySendBuffer.erase(btm->telemetrySendBuffer.begin(),
+												   btm->telemetrySendBuffer.begin() +
+														numBytesWritten);
+					btm->orderedThreadLock.unlock(btm->btMgrLockConditionVar);
+				}
+			}
 		}
 		if (doDeviceInquery)
 		{
@@ -159,6 +200,7 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 						requestedDevAddr.c_str());
 				btSerial = BTSerialPortBinding::Create(requestedDevAddr, 1);
 				SDL_Log("SUCCESS!\n");
+				btSerial->setTimoutRead(1);
 			}
 			catch (BluetoothException const& bte)
 			{
