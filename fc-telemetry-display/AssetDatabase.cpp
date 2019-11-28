@@ -6,10 +6,10 @@ bool AssetDatabase::load()
 {
 //	if (!loadTexture("marble.jpg")) return false;
 //	if (!loadTexture("cockatrice.jpg")) return false;
-//	if (!loadTexture("droid-fighter/DiffuseTexture.png")) return false;
-//	if (!loadTexture("droid-fighter/IlluminationTexture.png")) return false;
-//	if (!loadTexture("droid-fighter/SpecularTexture.png")) return false;
-//	if (!loadModel("droid-fighter/droid-fighter.fbx")) return false;
+	if (!loadTexture("droid-fighter/DiffuseTexture.png")) return false;
+	if (!loadTexture("droid-fighter/IlluminationTexture.png")) return false;
+	if (!loadTexture("droid-fighter/SpecularTexture.png")) return false;
+	if (!loadModel("droid-fighter/droid-fighter.fbx")) return false;
 //	if (!loadTexture("Meteor/Meteor_d.tga")) return false;
 //	if (!loadTexture("Meteor/Meteor_g.tga")) return false;
 //	if (!loadTexture("Meteor/Meteor_n.tga")) return false;

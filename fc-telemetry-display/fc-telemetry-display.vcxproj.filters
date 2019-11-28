@@ -93,6 +93,9 @@
     <ClCompile Include="OrderedLock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TelemetryVisualizer3D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -147,6 +150,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OrderedLock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TelemetryVisualizer3D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

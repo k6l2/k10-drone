@@ -2,7 +2,8 @@
 class Camera
 {
 public:
-	Camera(v3f const& worldPosition, v3f const& targetWorldPosition);
+	Camera(v3f const& worldPosition = v3f(0,0,0), 
+		   v3f const& targetWorldPosition = k10::FORWARD);
 	void setPosition(v3f const& worldPosition);
 	void setTarget(v3f const& worldPosition);
 	v3f const& getWorldPosition() const;

@@ -3,6 +3,8 @@
 #include "Input.h"
 #include "GuiDebugFrameMetrics.h"
 #include "BluetoothManager.h"
+#include "TelemetryVisualizer3D.h"
+TelemetryVisualizer3D visualizer3d;
 BluetoothManager btManager;
 enum class ApplicationState : u8
 {
@@ -22,17 +24,6 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 	defer(SDL_Quit());
-	btMgrLockConditionVar = SDL_CreateCond();
-	if (!btMgrLockConditionVar)
-	{
-		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-					 "Failed to create condition variable: '%s'\n", 
-					 SDL_GetError());
-		return EXIT_FAILURE;
-	}
-	defer(SDL_DestroyCond(btMgrLockConditionVar));
-	btManager.initialize();
-	defer(btManager.free());
 	if (!k10::initializeGlobalVariables())
 	{
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
@@ -45,6 +36,24 @@ int main(int argc, char** argv)
 					 "Failed to load global assets!\n");
 		return EXIT_FAILURE;
 	}
+	// create bluetooth manager // 
+	btMgrLockConditionVar = SDL_CreateCond();
+	if (!btMgrLockConditionVar)
+	{
+		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+			"Failed to create condition variable: '%s'\n",
+			SDL_GetError());
+		return EXIT_FAILURE;
+	}
+	defer(SDL_DestroyCond(btMgrLockConditionVar));
+	btManager.initialize();
+	defer(btManager.free());
+	// create the 3D telemetry visualizer //
+	if (!visualizer3d.init())
+	{
+		return EXIT_FAILURE;
+	}
+	defer(visualizer3d.free());
 //	Timer totalApplicationTimer;
 	Timer frameTimer;
 	while (k10::window->isOpen())
@@ -83,6 +92,7 @@ int main(int argc, char** argv)
 			k10::window->close();
 		}
 		k10::window->clear(Color(30, 30, 30));
+		visualizer3d.step(btManager.bluetoothSerialConnected());
 		k10::guiDebugFrameMetrics->drawImGuiFrameMetrics(frameTime);
 		// Main Menu GUI //
 		const bool enableMenuItems = (appState == ApplicationState::DEFAULT);

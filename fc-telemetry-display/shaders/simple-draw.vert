@@ -7,7 +7,6 @@ layout(binding = 0, std140) uniform GlobalMatrixBlock
 layout(location = 0) uniform mat4 matModel;
 layout(location = 0) in vec3  vertexPosition;
 layout(location = 2) in vec4  vertexColor;
-layout(location = 3) in vec3 vertexNormal;
 layout(location = 0) out vec4 fragColor;
 void main()
 {
