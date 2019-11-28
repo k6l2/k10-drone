@@ -17,6 +17,7 @@ char const* selectedBtConnectDevice = nullptr;
 string      selectedBtConnectAddress;
 vector<char> currentRawTelemetry;
 SDL_cond* btMgrLockConditionVar = nullptr;
+char bluetoothInputBuffer[256] = { '\n' };
 int main(int argc, char** argv)
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0)
@@ -95,6 +96,7 @@ int main(int argc, char** argv)
 		k10::window->clear(Color(30, 30, 30));
 		visualizer3d.step(btManager.bluetoothSerialConnected());
 		k10::guiDebugFrameMetrics->drawImGuiFrameMetrics(frameTime);
+		ImGui::ShowDemoWindow();
 		// Main Menu GUI //
 		const bool enableMenuItems = (appState == ApplicationState::DEFAULT);
 		if (ImGui::BeginMainMenuBar())
@@ -127,19 +129,49 @@ int main(int argc, char** argv)
 			{
 				currentRawTelemetry = btManager.getRawTelemetry();
 				ImGui::Begin("Raw Telemetry");
+				// 1 separator, 1 input text
+				const float footer_height_to_reserve = 
+					ImGui::GetStyle().ItemSpacing.y + 
+						ImGui::GetFrameHeightWithSpacing(); 
+				ImGui::BeginChild("ScrollingRegion", 
+								  // Leave room for 1 separator + 1 InputText
+								  ImVec2(0, -footer_height_to_reserve), false, 
+								  ImGuiWindowFlags_HorizontalScrollbar); 
+				// Tighten spacing
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
 				if (!currentRawTelemetry.empty())
 				{
 					ImGui::TextUnformatted(currentRawTelemetry.data(), 
 										   currentRawTelemetry.data() + 
 												currentRawTelemetry.size());
 				}
-				if (btManager.extractNewTelemetryByteCount() > 0)
+				if (btManager.extractNewTelemetryByteCount() > 0 &&
+					ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
 				{
 					ImGui::SetScrollHereY(1.f);
 				}
+				ImGui::PopStyleVar();
+				ImGui::EndChild();
+				ImGui::Separator();
+				bool reclaimInputFocus = false;
+				if (ImGui::InputText("BluetoothInput", bluetoothInputBuffer, 
+									 IM_ARRAYSIZE(bluetoothInputBuffer), 
+									 ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					//TODO: console interface with the modem
+					strcpy_s(bluetoothInputBuffer, "");
+					//bluetoothInputBuffer[0] = '\n';
+					reclaimInputFocus = true;
+				}
+				// the console input should be this window's default focus item
+				ImGui::SetItemDefaultFocus();
+				if (reclaimInputFocus)
+				{
+					// set the focus on the previous item
+					ImGui::SetKeyboardFocusHere(-1);
+				}
 				ImGui::End();
 			}
-			//TODO: console interface with the modem
 		}	break;
 		case ApplicationState::CONNECTING_TO_BLUETOOTH_DEVICE: {
 			bool open = true;
