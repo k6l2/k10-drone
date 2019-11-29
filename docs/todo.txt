@@ -12,7 +12,8 @@
 -[PC APPLICATION] draw 3D model of the drone
 -[PC APPLICATION] orbit camera around the origin, control w/ mouse (click+drag)
 -[PC APPLICATION] test remote programming of the bluesmirf
---------------------------- DONE ----------------------------------------------
 -[ARDUINO FLIGHT CONTROLLER] pack the GY-87 data into binary instead of ASCII text
 -[PC APPLICATION] decode binary telemetry
+--------------------------- DONE ----------------------------------------------
 -[PC APPLICATION] set the 3D model of the drone to the interpreted orientation based on telemetry
+	sensor fusion info: https://www.w3.org/TR/motion-sensors/

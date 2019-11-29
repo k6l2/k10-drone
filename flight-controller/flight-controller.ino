@@ -100,7 +100,13 @@ void loop()
     Serial.print(v3Compass.y);      Serial.print("\t");
     Serial.print(v3Compass.z);      Serial.print("\t");
     Serial.print(heading*180/M_PI); Serial.print("\t\n");*/
-    bluetooth.print(v3Accel.x);        bluetooth.print("\t");
+    bluetooth.write("FCTP");
+    unsigned long const currMillis = millis();
+    bluetooth.write((uint8_t const*)&currMillis, sizeof(unsigned long));
+    bluetooth.write((uint8_t const*)&v3Accel   , sizeof(i16v3));
+    bluetooth.write((uint8_t const*)&v3Gyro    , sizeof(i16v3));
+    bluetooth.write((uint8_t const*)&v3Compass , sizeof(i16v3));
+    /*bluetooth.print(v3Accel.x);        bluetooth.print("\t");
     bluetooth.print(v3Accel.y);        bluetooth.print("\t");
     bluetooth.print(v3Accel.z);        bluetooth.print("\t");
     bluetooth.print(v3Gyro.x);         bluetooth.print("\t");
@@ -109,7 +115,7 @@ void loop()
     bluetooth.print(v3Compass.x);      bluetooth.print("\t");
     bluetooth.print(v3Compass.y);      bluetooth.print("\t");
     bluetooth.print(v3Compass.z);      bluetooth.print("\t");
-    bluetooth.print(heading*180/M_PI); bluetooth.print("\t\n");
+    bluetooth.print(heading*180/M_PI); bluetooth.print("\t\n");*/
     lastSensorReadMilliseconds = millis();
   }
   if(bluetooth.available())

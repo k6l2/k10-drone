@@ -1,6 +1,7 @@
 #include "BluetoothManager.h"
 #include <BluetoothException.h>
 #include "Timer.h"
+const string BluetoothManager::TELEMETRY_PACKET_HEADER = "FCTP";
 void BluetoothManager::initialize()
 {
 	free();
@@ -109,6 +110,11 @@ void BluetoothManager::sendData(char const* data, size_t size)
 		telemetrySendBuffer.push_back('\n');
 	}
 }
+BluetoothManager::TelemetryPacket const& 
+	BluetoothManager::getLatestCompleteTelemetryPacket() const
+{
+	return latestCompleteTelemetryPacket;
+}
 int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 {
 	BluetoothManager* const btm = 
@@ -146,6 +152,48 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 				btm->orderedThreadLock.lock(btm->btMgrLockConditionVar);
 				for (int c = 0; c < numBytesRead; c++)
 				{
+					// scan for telemetry packet header
+					if (btm->numHeaderBytesRead < 
+							TELEMETRY_PACKET_HEADER.size())
+					{
+						if (telemetryTempBuff[c] == 
+							TELEMETRY_PACKET_HEADER[btm->numHeaderBytesRead])
+						{
+							btm->numHeaderBytesRead++;
+						}
+					}
+					else 
+					if(btm->numTelemetryPacketBytesRead < sizeof(TelemetryPacket))
+					{
+						btm->telemetryPacket.rawBytes[btm->numTelemetryPacketBytesRead] =
+							telemetryTempBuff[c];
+						btm->numTelemetryPacketBytesRead++;
+						if (btm->numTelemetryPacketBytesRead >= 
+								sizeof(TelemetryPacket))
+						{
+							// we've filled up a complete telemetry packet, so
+							//	we can now extract the information! //
+							btm->latestCompleteTelemetryPacket = 
+								btm->telemetryPacket.tp;
+							SDL_Log("---TelemetryPacket---\n\t"
+								"milliseconds=%i accel={%i,%i,%i} "
+								"gyro={%i,%i,%i} compass={%i,%i,%i}",
+								btm->telemetryPacket.tp.milliseconds,
+								btm->telemetryPacket.tp.accelleration.x,
+								btm->telemetryPacket.tp.accelleration.y,
+								btm->telemetryPacket.tp.accelleration.z,
+								btm->telemetryPacket.tp.gyro.x,
+								btm->telemetryPacket.tp.gyro.y,
+								btm->telemetryPacket.tp.gyro.z,
+								btm->telemetryPacket.tp.compass.x,
+								btm->telemetryPacket.tp.compass.y,
+								btm->telemetryPacket.tp.compass.z);
+							// reset the telemetry packet state machine to look
+							//	for the next telemetry packet header //
+							btm->numTelemetryPacketBytesRead = 0;
+							btm->numHeaderBytesRead = 0;
+						}
+					}
 					btm->rawTelemetry.push_back(telemetryTempBuff[c]);
 				}
 				if (btm->rawTelemetry.size() > MAX_RAW_TELEMETRY_BUFFER_SIZE)
