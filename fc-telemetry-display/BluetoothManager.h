@@ -20,9 +20,7 @@ public:
 	struct TelemetryPacket
 	{
 		u32 milliseconds;
-		i16v3 accelleration;
-		i16v3 gyro;
-		i16v3 compass;
+		v3f relativeOrientationRadians;
 	};
 #pragma pack(pop)
 public:
@@ -67,8 +65,7 @@ private:
 	static const string TELEMETRY_PACKET_HEADER;
 	TelemetryPacketUnion telemetryPacket;
 	TelemetryPacket latestCompleteTelemetryPacket = 
-		{ .milliseconds = 0      , .accelleration = {0,0,0}, .gyro = {0,0,0},
-		  .compass      = {0,0,0} };
+		{ .milliseconds = 0, .relativeOrientationRadians = {0,0,0} };
 	u8 numHeaderBytesRead = 0;
 	size_t numTelemetryPacketBytesRead = 0;
 };

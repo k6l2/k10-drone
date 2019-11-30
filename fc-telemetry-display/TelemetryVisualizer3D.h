@@ -5,7 +5,7 @@ class TelemetryVisualizer3D
 public:
 	bool init();
 	void free();
-	void step(bool droneTelemetryConnected);
+	void step(bool droneTelemetryConnected, float pitch, float roll, float yaw);
 private:
 	struct GlobalMatrixBlock
 	{

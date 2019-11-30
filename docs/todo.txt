@@ -14,6 +14,21 @@
 -[PC APPLICATION] test remote programming of the bluesmirf
 -[ARDUINO FLIGHT CONTROLLER] pack the GY-87 data into binary instead of ASCII text
 -[PC APPLICATION] decode binary telemetry
---------------------------- DONE ----------------------------------------------
--[PC APPLICATION] set the 3D model of the drone to the interpreted orientation based on telemetry
+-[ARDUINO FLIGHT CONTROLLER] implement some kind of Absolute Orientation Sensor using raw IMU output
 	sensor fusion info: https://www.w3.org/TR/motion-sensors/
+-[PC APPLICATION] set the 3D model of the drone to the interpreted orientation based on telemetry
+--------------------------- DONE ----------------------------------------------
+-purchase necessary drone parts for the next phase of development
+	-frame
+	-battery
+	-charger
+	-Power Distribution Board
+	-Electronic Speed Controllers
+	-Motors
+	-Props
+	-jumper wire headers for my old radio's Rx module
+		https://www.sparkfun.com/products/10368 ???
+	-whip antenna tube that's long enough to keep the antenna out of the props
+	-28-pin dip socket for the atmega
+		https://www.sparkfun.com/products/7942
+-[ARDUINO FLIGHT CONTROLLER] improve calculation of 'relativeOrientationRadians' because right now this method kinda sucks

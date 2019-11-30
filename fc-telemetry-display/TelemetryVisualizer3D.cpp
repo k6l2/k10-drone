@@ -42,7 +42,8 @@ void TelemetryVisualizer3D::free()
 {
 	uboGlobalUniformBlock.destroy();
 }
-void TelemetryVisualizer3D::step(bool droneTelemetryConnected)
+void TelemetryVisualizer3D::step(bool droneTelemetryConnected, 
+								 float pitch, float roll, float yaw)
 {
 	camera.yaw  (k10::input->axis("camLookYaw"  ) * 0.002f);
 	camera.pitch(k10::input->axis("camLookPitch") * 0.002f);
@@ -78,7 +79,11 @@ void TelemetryVisualizer3D::step(bool droneTelemetryConnected)
 		// draw the 3D visualization of the drone's orientation //
 		static char const* const gfxProgName = "simple-draw-textured";
 		static char const* const modelName   = "droid-fighter/droid-fighter.fbx";
-		glm::mat4 meshModel = glm::mat4(1.f);
+		glm::mat4 meshModel = 
+			glm::rotate(glm::rotate(glm::rotate(glm::mat4(1.f),
+				yaw  ,  k10::WORLD_UP),
+				pitch, -k10::RIGHT),
+				roll , -k10::FORWARD);
 		k10::assetDb.getGfxProgram(gfxProgName)->setUniform(0, meshModel);
 		if (!GfxProgram::use(k10::assetDb.getGfxProgram(gfxProgName)))
 		{

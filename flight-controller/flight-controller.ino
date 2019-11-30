@@ -25,27 +25,13 @@
 #include <HMC5883L.h>
 #include <BMP085.h>
 #include <I2Cdev.h>
-static const unsigned long SENSOR_READ_DELTA_MILLISECONDS = 100;
+static const unsigned long SENSOR_READ_DELTA_MILLISECONDS = 50;
 static const int pinBluetoothTx = 2;
 static const int pinBluetoothRx = 3;
-static const float SENSITIVITY_ACCEL = 16384;
-static const float SENSITIVITY_GYRO  = 131;
-struct i16v3
-{
-  int16_t x;
-  int16_t y;
-  int16_t z;
-};
 SoftwareSerial bluetooth(pinBluetoothTx, pinBluetoothRx);
 HMC5883L compass;
-i16v3 v3Compass;
 MPU6050 motion;
-i16v3 v3Accel;
-i16v3 v3Gyro;
 BMP085 barothermometer;
-//float celsius;
-//float pascals;
-unsigned long lastSensorReadMilliseconds = 0;
 void setup()
 {
   // Start the atmega's serial monitor so we can examine the COM port output
@@ -82,20 +68,97 @@ void setup()
   Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
   Serial.println("---Setup complete!---");
 }
+struct i16v3
+{
+  int16_t x;
+  int16_t y;
+  int16_t z;
+};
+i16v3 v3Compass;
+// values need to be decoded using the proper sensitivity scaling factors
+i16v3 v3Accel;
+// values need to be decoded using the proper sensitivity scaling factors
+i16v3 v3Gyro;
+//float celsius;
+//float pascals;
+unsigned long lastSensorReadMilliseconds = 0;
+struct v3f
+{
+  float x;
+  float y;
+  float z;
+};
+// see MPU6050::initialize for why this variable is initialized to this value
+//  The sensor's register returns a signed-16-bit #, and that range must be
+//  divided by the maximum possible value (2G)
+float scaleAccel = 1.f / (0x7FFF / 2.f);
+// see MPU6050::initialize for why this variable is initialized to this value
+//  The sensor's register returns a signed-16-bit #, and that range must be
+//  divided by the maximum possible value (250 degrees/second)
+float scaleGyro  = 1.f / (0x7FFF / 250.f);
+// properly scaled v3Accel values, where a magnitude of 1 == 9.81 m/s^2 (1g)
+v3f gForce;
+// properly scaled v3Gyro values
+v3f degreesPerSecond;
+v3f relativeOrientationRadians = {0,0,0};
+static const float REL_ORIENT_UPDATE_BIAS = 0.98;
+void updateRelativeOrientation(float deltaSeconds)
+{
+  // Derived from: https://www.w3.org/TR/motion-sensors/#complementary-filters
+  static const float ACCEL_SCALE = PI / 2;
+  const float gForceMag = sqrtf(gForce.x*gForce.x + 
+                                gForce.y*gForce.y + 
+                                gForce.z*gForce.z);
+  if(gForceMag > 0)
+  {
+    relativeOrientationRadians.x = 
+           REL_ORIENT_UPDATE_BIAS *(relativeOrientationRadians.x + degreesPerSecond.x*(PI/180)*deltaSeconds) +
+      (1 - REL_ORIENT_UPDATE_BIAS)*(gForce.x / gForceMag *  ACCEL_SCALE);
+    relativeOrientationRadians.y = 
+           REL_ORIENT_UPDATE_BIAS *(relativeOrientationRadians.y + degreesPerSecond.y*(PI/180)*deltaSeconds) +
+      (1 - REL_ORIENT_UPDATE_BIAS)*(gForce.y / gForceMag * -ACCEL_SCALE);
+  }
+  relativeOrientationRadians.z += degreesPerSecond.z*(PI/180)*deltaSeconds;
+}
+void scaleRawMotionData()
+{
+  // thanks to sasebot-sensei: https://electronics.stackexchange.com/a/176705
+  gForce.x = v3Accel.x * scaleAccel;
+  gForce.y = v3Accel.y * scaleAccel;
+  gForce.z = v3Accel.z * scaleAccel;
+  degreesPerSecond.x = v3Gyro.x * scaleGyro;
+  degreesPerSecond.y = v3Gyro.y * scaleGyro;
+  degreesPerSecond.z = v3Gyro.z * scaleGyro;
+}
 void loop() 
 {
-  if(millis() - lastSensorReadMilliseconds > SENSOR_READ_DELTA_MILLISECONDS)
+  const unsigned long deltaMilliseconds = 
+    millis() - lastSensorReadMilliseconds;
+  if(deltaMilliseconds > SENSOR_READ_DELTA_MILLISECONDS)
   {
     motion.getMotion6(&v3Accel.x, &v3Accel.y, &v3Accel.z,
-                      &v3Gyro.x, &v3Gyro.y, &v3Gyro.z);
+                      &v3Gyro.x , &v3Gyro.y , &v3Gyro.z);
+    scaleRawMotionData();
     compass.getHeading(&v3Compass.x, &v3Compass.y, &v3Compass.z);
-    const float heading = atan2(v3Compass.y, v3Compass.x);
-    /*Serial.print(v3Accel.x);        Serial.print("\t");
+    updateRelativeOrientation(deltaMilliseconds / 1000.f);
+    /*
+    Serial.print(deltaMilliseconds); Serial.print("\t");
+    Serial.print(relativeOrientationRadians.x); Serial.print("\t");
+    Serial.print(relativeOrientationRadians.y); Serial.print("\t");
+    Serial.print(relativeOrientationRadians.z); Serial.print("\n");
+//    const float heading = atan2(v3Compass.y, v3Compass.x);
+    Serial.print(gForce.x);           Serial.print("\t");
+    Serial.print(gForce.y);           Serial.print("\t");
+    Serial.print(gForce.z);           Serial.print("\t");
+    Serial.print(degreesPerSecond.x); Serial.print("\t");
+    Serial.print(degreesPerSecond.y); Serial.print("\t");
+    Serial.print(degreesPerSecond.z); Serial.print("\n");
+    Serial.print(v3Accel.x);        Serial.print("\t");
     Serial.print(v3Accel.y);        Serial.print("\t");
     Serial.print(v3Accel.z);        Serial.print("\t");
     Serial.print(v3Gyro.x);         Serial.print("\t");
     Serial.print(v3Gyro.y);         Serial.print("\t");
-    Serial.print(v3Gyro.z);         Serial.print("\t");
+    Serial.print(v3Gyro.z);         Serial.print("\n");
     Serial.print(v3Compass.x);      Serial.print("\t");
     Serial.print(v3Compass.y);      Serial.print("\t");
     Serial.print(v3Compass.z);      Serial.print("\t");
@@ -103,9 +166,11 @@ void loop()
     bluetooth.write("FCTP");
     unsigned long const currMillis = millis();
     bluetooth.write((uint8_t const*)&currMillis, sizeof(unsigned long));
-    bluetooth.write((uint8_t const*)&v3Accel   , sizeof(i16v3));
-    bluetooth.write((uint8_t const*)&v3Gyro    , sizeof(i16v3));
-    bluetooth.write((uint8_t const*)&v3Compass , sizeof(i16v3));
+    bluetooth.write((uint8_t const*)&relativeOrientationRadians, 
+                    sizeof(relativeOrientationRadians));
+//    bluetooth.write((uint8_t const*)&v3Accel   , sizeof(i16v3));
+//    bluetooth.write((uint8_t const*)&v3Gyro    , sizeof(i16v3));
+//    bluetooth.write((uint8_t const*)&v3Compass , sizeof(i16v3));
     /*bluetooth.print(v3Accel.x);        bluetooth.print("\t");
     bluetooth.print(v3Accel.y);        bluetooth.print("\t");
     bluetooth.print(v3Accel.z);        bluetooth.print("\t");

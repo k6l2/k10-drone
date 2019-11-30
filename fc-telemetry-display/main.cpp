@@ -94,7 +94,10 @@ int main(int argc, char** argv)
 			k10::window->close();
 		}
 		k10::window->clear(Color(30, 30, 30));
-		visualizer3d.step(btManager.bluetoothSerialConnected());
+		visualizer3d.step(btManager.bluetoothSerialConnected(),
+			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.x,
+			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.y,
+			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.z);
 		k10::guiDebugFrameMetrics->drawImGuiFrameMetrics(frameTime);
 		// Main Menu GUI //
 		const bool enableMenuItems = (appState == ApplicationState::DEFAULT);

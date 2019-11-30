@@ -176,18 +176,12 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 							btm->latestCompleteTelemetryPacket = 
 								btm->telemetryPacket.tp;
 							SDL_Log("---TelemetryPacket---\n\t"
-								"milliseconds=%i accel={%i,%i,%i} "
-								"gyro={%i,%i,%i} compass={%i,%i,%i}",
+								"milliseconds=%i "
+								"relativeOrientationRadians={%f,%f,%f} ",
 								btm->telemetryPacket.tp.milliseconds,
-								btm->telemetryPacket.tp.accelleration.x,
-								btm->telemetryPacket.tp.accelleration.y,
-								btm->telemetryPacket.tp.accelleration.z,
-								btm->telemetryPacket.tp.gyro.x,
-								btm->telemetryPacket.tp.gyro.y,
-								btm->telemetryPacket.tp.gyro.z,
-								btm->telemetryPacket.tp.compass.x,
-								btm->telemetryPacket.tp.compass.y,
-								btm->telemetryPacket.tp.compass.z);
+								btm->telemetryPacket.tp.relativeOrientationRadians.x,
+								btm->telemetryPacket.tp.relativeOrientationRadians.y,
+								btm->telemetryPacket.tp.relativeOrientationRadians.z);
 							// reset the telemetry packet state machine to look
 							//	for the next telemetry packet header //
 							btm->numTelemetryPacketBytesRead = 0;
