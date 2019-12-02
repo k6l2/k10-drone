@@ -98,6 +98,10 @@ int main(int argc, char** argv)
 			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.x,
 			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.y,
 			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.z);
+		if (btManager.bluetoothSerialConnected())
+		{
+			btManager.drawImGuiFrameMetrics();
+		}
 		k10::guiDebugFrameMetrics->drawImGuiFrameMetrics(frameTime);
 		// Main Menu GUI //
 		const bool enableMenuItems = (appState == ApplicationState::DEFAULT);

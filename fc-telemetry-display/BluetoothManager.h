@@ -11,15 +11,17 @@ public:
 	// pack the telemetry packet structure so we can safely union it with an
 	//	array of characters to fill in the binary data from a serial stream.
 #pragma pack(push, 1) 
-	struct i16v3
-	{
-		i16 x;
-		i16 y;
-		i16 z;
-	};
+//	struct i16v3
+//	{
+//		i16 x;
+//		i16 y;
+//		i16 z;
+//	};
 	struct TelemetryPacket
 	{
 		u32 milliseconds;
+		v3f gForce;
+		v3f degreesPerSecond;
 		v3f relativeOrientationRadians;
 	};
 #pragma pack(pop)
@@ -38,6 +40,7 @@ public:
 	size_t extractNewTelemetryByteCount();
 	void sendData(char const* data, size_t size);
 	TelemetryPacket const& getLatestCompleteTelemetryPacket() const;
+	void drawImGuiFrameMetrics() const;
 private:
 	static int bluetoothManagerThreadMain(void* pBluetoothManager);
 private:
@@ -68,4 +71,10 @@ private:
 		{ .milliseconds = 0, .relativeOrientationRadians = {0,0,0} };
 	u8 numHeaderBytesRead = 0;
 	size_t numTelemetryPacketBytesRead = 0;
+	// debug telemetry GUI ////////////////////////////////////////////////////
+	size_t maxFrameMetricCount = 60 * 5;
+	vector<float> frameDegreesPerSecondX = vector<float>(maxFrameMetricCount);
+	vector<float> frameDegreesPerSecondY = vector<float>(maxFrameMetricCount);
+	vector<float> frameDegreesPerSecondZ = vector<float>(maxFrameMetricCount);
+	int frameMetricsOffset = 0;
 };

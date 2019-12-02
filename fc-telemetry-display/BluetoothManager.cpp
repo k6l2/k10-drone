@@ -115,6 +115,22 @@ BluetoothManager::TelemetryPacket const&
 {
 	return latestCompleteTelemetryPacket;
 }
+void BluetoothManager::drawImGuiFrameMetrics() const
+{
+	// Draw the ImGui data metrics //
+	ImGui::Begin("Telemetry Frame Metrics");// , nullptr,
+				 //ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::PlotLines("gyroX", frameDegreesPerSecondX.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset,nullptr, FLT_MAX, FLT_MAX, {0,100});
+	ImGui::PlotLines("gyroY", frameDegreesPerSecondY.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("gyroZ", frameDegreesPerSecondZ.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::End();
+}
 int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 {
 	BluetoothManager* const btm = 
@@ -175,13 +191,23 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 							//	we can now extract the information! //
 							btm->latestCompleteTelemetryPacket = 
 								btm->telemetryPacket.tp;
-							SDL_Log("---TelemetryPacket---\n\t"
-								"milliseconds=%i "
-								"relativeOrientationRadians={%f,%f,%f} ",
-								btm->telemetryPacket.tp.milliseconds,
-								btm->telemetryPacket.tp.relativeOrientationRadians.x,
-								btm->telemetryPacket.tp.relativeOrientationRadians.y,
-								btm->telemetryPacket.tp.relativeOrientationRadians.z);
+//							SDL_Log("---TelemetryPacket---\n\t"
+//								"milliseconds=%i "
+//								"relativeOrientationRadians={%f,%f,%f} ",
+//								btm->telemetryPacket.tp.milliseconds,
+//								btm->telemetryPacket.tp.relativeOrientationRadians.x,
+//								btm->telemetryPacket.tp.relativeOrientationRadians.y,
+//								btm->telemetryPacket.tp.relativeOrientationRadians.z);
+							// append new telemetry data to GUI buffers //
+							btm->frameDegreesPerSecondX[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.degreesPerSecond.x;
+							btm->frameDegreesPerSecondY[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.degreesPerSecond.y;
+							btm->frameDegreesPerSecondZ[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.degreesPerSecond.z;
+							btm->frameMetricsOffset = 
+								(btm->frameMetricsOffset + 1) % 
+									btm->maxFrameMetricCount;
 							// reset the telemetry packet state machine to look
 							//	for the next telemetry packet header //
 							btm->numTelemetryPacketBytesRead = 0;

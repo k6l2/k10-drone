@@ -32,6 +32,42 @@ SoftwareSerial bluetooth(pinBluetoothTx, pinBluetoothRx);
 HMC5883L compass;
 MPU6050 motion;
 BMP085 barothermometer;
+struct i16v3
+{
+  int16_t x;
+  int16_t y;
+  int16_t z;
+};
+i16v3 v3Compass;
+// values need to be decoded using the proper sensitivity scaling factors
+i16v3 v3Accel;
+// values need to be decoded using the proper sensitivity scaling factors
+i16v3 v3Gyro;
+//float celsius;
+//float pascals;
+unsigned long lastSensorReadMilliseconds = 0;
+struct v3f
+{
+  float x;
+  float y;
+  float z;
+};
+// see MPU6050::initialize for why this variable is initialized to this value
+//  The sensor's register returns a signed-16-bit #, and that range must be
+//  divided by the maximum possible value (2G)
+float scaleAccel = 1.f / (0x7FFF / 2.f);
+// see MPU6050::initialize for why this variable is initialized to this value
+//  The sensor's register returns a signed-16-bit #, and that range must be
+//  divided by the maximum possible value (250 degrees/second)
+float scaleGyro  = 1.f / (0x7FFF / 250.f);
+// properly scaled v3Accel values, where a magnitude of 1 == 9.81 m/s^2 (1g)
+v3f gForce;
+// properly scaled v3Gyro values
+v3f degreesPerSecond;
+v3f relativeOrientationRadians = {0,0,0};
+static const float REL_ORIENT_UPDATE_BIAS = 0.98;
+static const size_t NUM_CALIBRATION_ITERATIONS = 10;
+v3f calibrationOffsetGyro = {0,0,0};
 void setup()
 {
   // Start the atmega's serial monitor so we can examine the COM port output
@@ -67,41 +103,26 @@ void setup()
   Serial.print("Barothermometer connection....... ");
   Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
   Serial.println("---Setup complete!---");
+  // sensor 'calibration': read a bunch of data from the sensors so
+  //  we can offset by the average of this data during runtime //
+  Serial.println("Calibrating...");
+  for(size_t c = 0; c < NUM_CALIBRATION_ITERATIONS; c++)
+  {
+    motion.getMotion6(&v3Accel.x, &v3Accel.y, &v3Accel.z,
+                      &v3Gyro.x , &v3Gyro.y , &v3Gyro.z);
+    calibrationOffsetGyro.x += v3Gyro.x;
+    calibrationOffsetGyro.y += v3Gyro.y;
+    calibrationOffsetGyro.z += v3Gyro.z;
+    delay(SENSOR_READ_DELTA_MILLISECONDS);
+  }
+  calibrationOffsetGyro.x /= NUM_CALIBRATION_ITERATIONS;
+  calibrationOffsetGyro.y /= NUM_CALIBRATION_ITERATIONS;
+  calibrationOffsetGyro.z /= NUM_CALIBRATION_ITERATIONS;
+  Serial.print(calibrationOffsetGyro.x); Serial.print("\t");
+  Serial.print(calibrationOffsetGyro.y); Serial.print("\t");
+  Serial.print(calibrationOffsetGyro.z); Serial.print("\n");
+  Serial.println("---Calibration complete!---");
 }
-struct i16v3
-{
-  int16_t x;
-  int16_t y;
-  int16_t z;
-};
-i16v3 v3Compass;
-// values need to be decoded using the proper sensitivity scaling factors
-i16v3 v3Accel;
-// values need to be decoded using the proper sensitivity scaling factors
-i16v3 v3Gyro;
-//float celsius;
-//float pascals;
-unsigned long lastSensorReadMilliseconds = 0;
-struct v3f
-{
-  float x;
-  float y;
-  float z;
-};
-// see MPU6050::initialize for why this variable is initialized to this value
-//  The sensor's register returns a signed-16-bit #, and that range must be
-//  divided by the maximum possible value (2G)
-float scaleAccel = 1.f / (0x7FFF / 2.f);
-// see MPU6050::initialize for why this variable is initialized to this value
-//  The sensor's register returns a signed-16-bit #, and that range must be
-//  divided by the maximum possible value (250 degrees/second)
-float scaleGyro  = 1.f / (0x7FFF / 250.f);
-// properly scaled v3Accel values, where a magnitude of 1 == 9.81 m/s^2 (1g)
-v3f gForce;
-// properly scaled v3Gyro values
-v3f degreesPerSecond;
-v3f relativeOrientationRadians = {0,0,0};
-static const float REL_ORIENT_UPDATE_BIAS = 0.98;
 void updateRelativeOrientation(float deltaSeconds)
 {
   // Derived from: https://www.w3.org/TR/motion-sensors/#complementary-filters
@@ -126,9 +147,9 @@ void scaleRawMotionData()
   gForce.x = v3Accel.x * scaleAccel;
   gForce.y = v3Accel.y * scaleAccel;
   gForce.z = v3Accel.z * scaleAccel;
-  degreesPerSecond.x = v3Gyro.x * scaleGyro;
-  degreesPerSecond.y = v3Gyro.y * scaleGyro;
-  degreesPerSecond.z = v3Gyro.z * scaleGyro;
+  degreesPerSecond.x = (v3Gyro.x - calibrationOffsetGyro.x) * scaleGyro;
+  degreesPerSecond.y = (v3Gyro.y - calibrationOffsetGyro.y) * scaleGyro;
+  degreesPerSecond.z = (v3Gyro.z - calibrationOffsetGyro.z) * scaleGyro;
 }
 void loop() 
 {
@@ -165,7 +186,10 @@ void loop()
     Serial.print(heading*180/M_PI); Serial.print("\t\n");*/
     bluetooth.write("FCTP");
     unsigned long const currMillis = millis();
-    bluetooth.write((uint8_t const*)&currMillis, sizeof(unsigned long));
+    bluetooth.write((uint8_t const*)&currMillis, sizeof(currMillis));
+    bluetooth.write((uint8_t const*)&gForce, sizeof(gForce));
+    bluetooth.write((uint8_t const*)&degreesPerSecond, 
+                    sizeof(degreesPerSecond));
     bluetooth.write((uint8_t const*)&relativeOrientationRadians, 
                     sizeof(relativeOrientationRadians));
 //    bluetooth.write((uint8_t const*)&v3Accel   , sizeof(i16v3));
