@@ -17,7 +17,9 @@
 -[ARDUINO FLIGHT CONTROLLER] implement some kind of Absolute Orientation Sensor using raw IMU output
 	sensor fusion info: https://www.w3.org/TR/motion-sensors/
 -[PC APPLICATION] set the 3D model of the drone to the interpreted orientation based on telemetry
+-[ARDUINO FLIGHT CONTROLLER] improve calculation of 'relativeOrientationRadians' because right now this method kinda sucks
 --------------------------- DONE ----------------------------------------------
+	-holy shit... are the value of 'degreesPerSecond' ACTUALLY in radiansPerSecond???...
 -purchase necessary drone parts for the next phase of development
 	-frame
 		[$40] SILO Phreakstyle Freestyle Quadcopter 5" frame https://www.getfpv.com/xilo-phreakstyle-freestyle-quadcopter.html
@@ -39,4 +41,3 @@
 		[$1] https://www.sparkfun.com/products/7942
 	-whip antenna tube that's long enough to keep the antenna out of the props
 		[$5] https://www.amazon.com/Traxxas-1726-Antenna-Vinyl-Retainer/dp/B000BOKC2G/ref=sr_1_3?keywords=rc+hobby+antenna+tube+long&qid=1575161328&sr=8-3
--[ARDUINO FLIGHT CONTROLLER] improve calculation of 'relativeOrientationRadians' because right now this method kinda sucks

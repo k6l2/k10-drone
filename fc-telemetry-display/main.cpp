@@ -95,9 +95,9 @@ int main(int argc, char** argv)
 		}
 		k10::window->clear(Color(30, 30, 30));
 		visualizer3d.step(btManager.bluetoothSerialConnected(),
-			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.x,
-			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.y,
-			btManager.getLatestCompleteTelemetryPacket().relativeOrientationRadians.z);
+			btManager.getLatestCompleteTelemetryPacket().relativeOrientationDegrees.x,
+			btManager.getLatestCompleteTelemetryPacket().relativeOrientationDegrees.y,
+			btManager.getLatestCompleteTelemetryPacket().relativeOrientationDegrees.z);
 		if (btManager.bluetoothSerialConnected())
 		{
 			btManager.drawImGuiFrameMetrics();

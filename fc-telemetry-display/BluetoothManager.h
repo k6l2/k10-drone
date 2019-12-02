@@ -19,10 +19,12 @@ public:
 //	};
 	struct TelemetryPacket
 	{
-		u32 milliseconds;
+		u32 microseconds;
+		u32 microsecondsDelta;
 		v3f gForce;
 		v3f degreesPerSecond;
-		v3f relativeOrientationRadians;
+		//v3f relativeOrientationRadians;
+		v3f relativeOrientationDegrees;
 	};
 #pragma pack(pop)
 public:
@@ -67,14 +69,17 @@ private:
 	vector<char> telemetrySendBuffer;
 	static const string TELEMETRY_PACKET_HEADER;
 	TelemetryPacketUnion telemetryPacket;
-	TelemetryPacket latestCompleteTelemetryPacket = 
-		{ .milliseconds = 0, .relativeOrientationRadians = {0,0,0} };
+	TelemetryPacket latestCompleteTelemetryPacket;
 	u8 numHeaderBytesRead = 0;
 	size_t numTelemetryPacketBytesRead = 0;
 	// debug telemetry GUI ////////////////////////////////////////////////////
 	size_t maxFrameMetricCount = 60 * 5;
+	vector<float> frameMicrosecondsDelta = vector<float>(maxFrameMetricCount);
 	vector<float> frameDegreesPerSecondX = vector<float>(maxFrameMetricCount);
 	vector<float> frameDegreesPerSecondY = vector<float>(maxFrameMetricCount);
 	vector<float> frameDegreesPerSecondZ = vector<float>(maxFrameMetricCount);
+	vector<float> frameRelativeOrientationDegreesX = vector<float>(maxFrameMetricCount);
+	vector<float> frameRelativeOrientationDegreesY = vector<float>(maxFrameMetricCount);
+	vector<float> frameRelativeOrientationDegreesZ = vector<float>(maxFrameMetricCount);
 	int frameMetricsOffset = 0;
 };

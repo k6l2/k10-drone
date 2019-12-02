@@ -120,13 +120,25 @@ void BluetoothManager::drawImGuiFrameMetrics() const
 	// Draw the ImGui data metrics //
 	ImGui::Begin("Telemetry Frame Metrics");// , nullptr,
 				 //ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::PlotHistogram("deltaMicros", frameMicrosecondsDelta.data(),
+					     static_cast<int>(maxFrameMetricCount),
+					     frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, {0,100});
 	ImGui::PlotLines("gyroX", frameDegreesPerSecondX.data(),
 					 static_cast<int>(maxFrameMetricCount),
-					 frameMetricsOffset,nullptr, FLT_MAX, FLT_MAX, {0,100});
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, {0,100});
 	ImGui::PlotLines("gyroY", frameDegreesPerSecondY.data(),
 					 static_cast<int>(maxFrameMetricCount),
 					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
 	ImGui::PlotLines("gyroZ", frameDegreesPerSecondZ.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("orientDegreesX", frameRelativeOrientationDegreesX.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, {0,100});
+	ImGui::PlotLines("orientDegreesY", frameRelativeOrientationDegreesY.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("orientDegreesZ", frameRelativeOrientationDegreesZ.data(),
 					 static_cast<int>(maxFrameMetricCount),
 					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
 	ImGui::End();
@@ -199,12 +211,20 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 //								btm->telemetryPacket.tp.relativeOrientationRadians.y,
 //								btm->telemetryPacket.tp.relativeOrientationRadians.z);
 							// append new telemetry data to GUI buffers //
+							btm->frameMicrosecondsDelta[btm->frameMetricsOffset] =
+								static_cast<float>(btm->latestCompleteTelemetryPacket.microsecondsDelta);
 							btm->frameDegreesPerSecondX[btm->frameMetricsOffset] =
 								btm->latestCompleteTelemetryPacket.degreesPerSecond.x;
 							btm->frameDegreesPerSecondY[btm->frameMetricsOffset] =
 								btm->latestCompleteTelemetryPacket.degreesPerSecond.y;
 							btm->frameDegreesPerSecondZ[btm->frameMetricsOffset] =
 								btm->latestCompleteTelemetryPacket.degreesPerSecond.z;
+							btm->frameRelativeOrientationDegreesX[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.relativeOrientationDegrees.x;
+							btm->frameRelativeOrientationDegreesY[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.relativeOrientationDegrees.y;
+							btm->frameRelativeOrientationDegreesZ[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.relativeOrientationDegrees.z;
 							btm->frameMetricsOffset = 
 								(btm->frameMetricsOffset + 1) % 
 									btm->maxFrameMetricCount;
