@@ -22,9 +22,8 @@ public:
 		u32 microseconds;
 		u32 microsecondsDelta;
 		v3f gForce;
-		v3f degreesPerSecond;
-		//v3f relativeOrientationRadians;
-		v3f relativeOrientationDegrees;
+		v3f radiansPerSecond;
+		v3f relativeOrientationRadians;
 	};
 #pragma pack(pop)
 public:
@@ -75,11 +74,11 @@ private:
 	// debug telemetry GUI ////////////////////////////////////////////////////
 	size_t maxFrameMetricCount = 60 * 5;
 	vector<float> frameMicrosecondsDelta = vector<float>(maxFrameMetricCount);
-	vector<float> frameDegreesPerSecondX = vector<float>(maxFrameMetricCount);
-	vector<float> frameDegreesPerSecondY = vector<float>(maxFrameMetricCount);
-	vector<float> frameDegreesPerSecondZ = vector<float>(maxFrameMetricCount);
-	vector<float> frameRelativeOrientationDegreesX = vector<float>(maxFrameMetricCount);
-	vector<float> frameRelativeOrientationDegreesY = vector<float>(maxFrameMetricCount);
-	vector<float> frameRelativeOrientationDegreesZ = vector<float>(maxFrameMetricCount);
+	vector<float> frameRadiansPerSecondX = vector<float>(maxFrameMetricCount);
+	vector<float> frameRadiansPerSecondY = vector<float>(maxFrameMetricCount);
+	vector<float> frameRadiansPerSecondZ = vector<float>(maxFrameMetricCount);
+	vector<float> frameRelativeOrientationRadiansX = vector<float>(maxFrameMetricCount);
+	vector<float> frameRelativeOrientationRadiansY = vector<float>(maxFrameMetricCount);
+	vector<float> frameRelativeOrientationRadiansZ = vector<float>(maxFrameMetricCount);
 	int frameMetricsOffset = 0;
 };

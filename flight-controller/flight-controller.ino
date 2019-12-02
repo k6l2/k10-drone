@@ -58,16 +58,13 @@ struct v3f
 float scaleAccel = 1.f / (0x7FFF / 2.f);
 // see MPU6050::initialize for why this variable is initialized to this value
 //  The sensor's register returns a signed-16-bit #, and that range must be
-//  divided by the maximum possible value (250 degrees/second)
-//float scaleGyro  = 1.f / (0x7FFF / 250.f);
-// we're changing the gyro's range in the setup function...
-float scaleGyro  = 1.f / (0x7FFF / 1000.f);
+//  divided by the maximum possible value (250 radians/second)
+float scaleGyro  = 1.f / (0x7FFF / 250.f);
 // properly scaled v3Accel values, where a magnitude of 1 == 9.81 m/s^2 (1g)
 v3f gForce;
 // properly scaled v3Gyro values
-v3f degreesPerSecond;
-v3f relativeOrientationDegrees = {0,0,0};
-//v3f relativeOrientationRadians = {0,0,0};
+v3f radiansPerSecond;
+v3f relativeOrientationRadians = {0,0,0};
 static const size_t NUM_CALIBRATION_ITERATIONS = 30;
 v3f calibrationOffsetGyro = {0,0,0};
 void setup()
@@ -94,7 +91,9 @@ void setup()
   motion.initialize();
   Serial.print("Accellerometer/Gyro connection... ");
   Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
-  motion.setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
+//  motion.setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
+  //we're changing the gyro's range in the setup function...
+//  scaleGyro  = 1.f / (0x7FFF / 1000.f);
   // in order to use the HMC5883L, we need to enable an I2C bypass
   motion.setI2CBypassEnabled(true);
   // initialize the HMC5883L chip on the GY-87
@@ -128,12 +127,9 @@ void setup()
 }
 void updateRelativeOrientation(float deltaSeconds)
 {
-  relativeOrientationDegrees.x += degreesPerSecond.x*deltaSeconds;
-  relativeOrientationDegrees.y += degreesPerSecond.y*deltaSeconds;
-  relativeOrientationDegrees.z += degreesPerSecond.z*deltaSeconds;
-  /*relativeOrientationRadians.x += degreesPerSecond.x*(M_PI/180.f)*deltaSeconds;
-  relativeOrientationRadians.y += degreesPerSecond.y*(M_PI/180.f)*deltaSeconds;
-  relativeOrientationRadians.z += degreesPerSecond.z*(M_PI/180.f)*deltaSeconds;*/
+  relativeOrientationRadians.x += radiansPerSecond.x*deltaSeconds;
+  relativeOrientationRadians.y += radiansPerSecond.y*deltaSeconds;
+  relativeOrientationRadians.z += radiansPerSecond.z*deltaSeconds;
   /*
   // Derived from: https://www.w3.org/TR/motion-sensors/#complementary-filters
   static const float ACCEL_SCALE = PI / 2;
@@ -158,9 +154,9 @@ void scaleRawMotionData()
   gForce.x = v3Accel.x * scaleAccel;
   gForce.y = v3Accel.y * scaleAccel;
   gForce.z = v3Accel.z * scaleAccel;
-  degreesPerSecond.x = (v3Gyro.x - calibrationOffsetGyro.x) * scaleGyro;
-  degreesPerSecond.y = (v3Gyro.y - calibrationOffsetGyro.y) * scaleGyro;
-  degreesPerSecond.z = (v3Gyro.z - calibrationOffsetGyro.z) * scaleGyro;
+  radiansPerSecond.x = (v3Gyro.x - calibrationOffsetGyro.x) * scaleGyro;
+  radiansPerSecond.y = (v3Gyro.y - calibrationOffsetGyro.y) * scaleGyro;
+  radiansPerSecond.z = (v3Gyro.z - calibrationOffsetGyro.z) * scaleGyro;
 }
 void loop() 
 {
@@ -178,12 +174,12 @@ void loop()
     bluetooth.write((uint8_t const*)&currMicros, sizeof(currMicros));
     bluetooth.write((uint8_t const*)&deltaMicroseconds, sizeof(deltaMicroseconds));
     bluetooth.write((uint8_t const*)&gForce, sizeof(gForce));
-    bluetooth.write((uint8_t const*)&degreesPerSecond, 
-                    sizeof(degreesPerSecond));
+    bluetooth.write((uint8_t const*)&radiansPerSecond, 
+                    sizeof(radiansPerSecond));
 //    bluetooth.write((uint8_t const*)&relativeOrientationRadians, 
 //                    sizeof(relativeOrientationRadians));
-    bluetooth.write((uint8_t const*)&relativeOrientationDegrees, 
-                    sizeof(relativeOrientationDegrees));
+    bluetooth.write((uint8_t const*)&relativeOrientationRadians, 
+                    sizeof(relativeOrientationRadians));
     lastSensorReadMicroseconds = micros();
   }
   if(bluetooth.available())
