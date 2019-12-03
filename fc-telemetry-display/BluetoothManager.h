@@ -73,12 +73,15 @@ private:
 	size_t numTelemetryPacketBytesRead = 0;
 	// debug telemetry GUI ////////////////////////////////////////////////////
 	size_t maxFrameMetricCount = 60 * 5;
-	vector<float> frameMicrosecondsDelta = vector<float>(maxFrameMetricCount);
-	vector<float> frameRadiansPerSecondX = vector<float>(maxFrameMetricCount);
-	vector<float> frameRadiansPerSecondY = vector<float>(maxFrameMetricCount);
-	vector<float> frameRadiansPerSecondZ = vector<float>(maxFrameMetricCount);
+	vector<float> frameMicrosecondsDelta           = vector<float>(maxFrameMetricCount);
+	vector<float> frameRadiansPerSecondX           = vector<float>(maxFrameMetricCount);
+	vector<float> frameRadiansPerSecondY           = vector<float>(maxFrameMetricCount);
+	vector<float> frameRadiansPerSecondZ           = vector<float>(maxFrameMetricCount);
 	vector<float> frameRelativeOrientationRadiansX = vector<float>(maxFrameMetricCount);
 	vector<float> frameRelativeOrientationRadiansY = vector<float>(maxFrameMetricCount);
 	vector<float> frameRelativeOrientationRadiansZ = vector<float>(maxFrameMetricCount);
+	vector<float> frameGForceX                     = vector<float>(maxFrameMetricCount);
+	vector<float> frameGForceY                     = vector<float>(maxFrameMetricCount);
+	vector<float> frameGForceZ                     = vector<float>(maxFrameMetricCount);
 	int frameMetricsOffset = 0;
 };

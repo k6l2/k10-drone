@@ -141,6 +141,15 @@ void BluetoothManager::drawImGuiFrameMetrics() const
 	ImGui::PlotLines("orientRadiansZ", frameRelativeOrientationRadiansZ.data(),
 					 static_cast<int>(maxFrameMetricCount),
 					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("gForceX", frameGForceX.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("gForceY", frameGForceY.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("gForceZ", frameGForceZ.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
 	ImGui::End();
 }
 int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
@@ -225,6 +234,12 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 								btm->latestCompleteTelemetryPacket.relativeOrientationRadians.y;
 							btm->frameRelativeOrientationRadiansZ[btm->frameMetricsOffset] =
 								btm->latestCompleteTelemetryPacket.relativeOrientationRadians.z;
+							btm->frameGForceX[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.gForce.x;
+							btm->frameGForceY[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.gForce.y;
+							btm->frameGForceZ[btm->frameMetricsOffset] =
+								btm->latestCompleteTelemetryPacket.gForce.z;
 							btm->frameMetricsOffset = 
 								(btm->frameMetricsOffset + 1) % 
 									btm->maxFrameMetricCount;

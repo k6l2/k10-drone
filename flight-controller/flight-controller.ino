@@ -66,7 +66,8 @@ v3f gForce;
 v3f radiansPerSecond;
 v3f relativeOrientationRadians = {0,0,0};
 static const size_t NUM_CALIBRATION_ITERATIONS = 30;
-v3f calibrationOffsetGyro = {0,0,0};
+v3f calibrationOffsetGyro  = {0,0,0};
+v3f calibrationOffsetAccel = {0,0,0};
 void setup()
 {
   // Start the atmega's serial monitor so we can examine the COM port output
@@ -91,9 +92,9 @@ void setup()
   motion.initialize();
   Serial.print("Accellerometer/Gyro connection... ");
   Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
-//  motion.setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
-  //we're changing the gyro's range in the setup function...
-//  scaleGyro  = 1.f / (0x7FFF / 1000.f);
+  // increase the gyro's range (decrease sensitivity)
+  motion.setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
+  scaleGyro  = 1.f / (0x7FFF / 1000.f);
   // in order to use the HMC5883L, we need to enable an I2C bypass
   motion.setI2CBypassEnabled(true);
   // initialize the HMC5883L chip on the GY-87
@@ -115,14 +116,26 @@ void setup()
     calibrationOffsetGyro.x += v3Gyro.x;
     calibrationOffsetGyro.y += v3Gyro.y;
     calibrationOffsetGyro.z += v3Gyro.z;
+    calibrationOffsetAccel.x += v3Accel.x;
+    calibrationOffsetAccel.y += v3Accel.y;
+    // Accelerometer in the Z direction must be calibrated for 1G,
+    //  since it is assumed that the drone is flat on the ground
+    //  during calibration //
+    calibrationOffsetAccel.z += (v3Accel.z - (1/scaleAccel));
     delay(SENSOR_READ_DELTA_MICROSECONDS / 1000);
   }
   calibrationOffsetGyro.x /= NUM_CALIBRATION_ITERATIONS;
   calibrationOffsetGyro.y /= NUM_CALIBRATION_ITERATIONS;
   calibrationOffsetGyro.z /= NUM_CALIBRATION_ITERATIONS;
+  calibrationOffsetAccel.x /= NUM_CALIBRATION_ITERATIONS;
+  calibrationOffsetAccel.y /= NUM_CALIBRATION_ITERATIONS;
+  calibrationOffsetAccel.z /= NUM_CALIBRATION_ITERATIONS;
   Serial.print(calibrationOffsetGyro.x); Serial.print("\t");
   Serial.print(calibrationOffsetGyro.y); Serial.print("\t");
   Serial.print(calibrationOffsetGyro.z); Serial.print("\n");
+  Serial.print(calibrationOffsetAccel.x); Serial.print("\t");
+  Serial.print(calibrationOffsetAccel.y); Serial.print("\t");
+  Serial.print(calibrationOffsetAccel.z); Serial.print("\n");
   Serial.println("---Calibration complete!---");
 }
 void updateRelativeOrientation(float deltaSeconds)
@@ -151,9 +164,10 @@ void updateRelativeOrientation(float deltaSeconds)
 void scaleRawMotionData()
 {
   // thanks to sasebot-sensei: https://electronics.stackexchange.com/a/176705
-  gForce.x = v3Accel.x * scaleAccel;
-  gForce.y = v3Accel.y * scaleAccel;
-  gForce.z = v3Accel.z * scaleAccel;
+  // Also, offset raw values by calibrated amounts calculated during setup
+  gForce.x = (v3Accel.x - calibrationOffsetAccel.x) * scaleAccel;
+  gForce.y = (v3Accel.y - calibrationOffsetAccel.y) * scaleAccel;
+  gForce.z = (v3Accel.z - calibrationOffsetAccel.z) * scaleAccel;
   radiansPerSecond.x = (v3Gyro.x - calibrationOffsetGyro.x) * scaleGyro;
   radiansPerSecond.y = (v3Gyro.y - calibrationOffsetGyro.y) * scaleGyro;
   radiansPerSecond.z = (v3Gyro.z - calibrationOffsetGyro.z) * scaleGyro;
