@@ -22,6 +22,7 @@ public:
 		u32 microseconds;
 		u32 microsecondsDelta;
 		v3f gForce;
+		v3f gForceMedian;
 		v3f radiansPerSecond;
 		v3f relativeOrientationRadians;
 	};
@@ -83,5 +84,8 @@ private:
 	vector<float> frameGForceX                     = vector<float>(maxFrameMetricCount);
 	vector<float> frameGForceY                     = vector<float>(maxFrameMetricCount);
 	vector<float> frameGForceZ                     = vector<float>(maxFrameMetricCount);
+	vector<float> frameGForceMedianX               = vector<float>(maxFrameMetricCount);
+	vector<float> frameGForceMedianY               = vector<float>(maxFrameMetricCount);
+	vector<float> frameGForceMedianZ               = vector<float>(maxFrameMetricCount);
 	int frameMetricsOffset = 0;
 };

@@ -20,10 +20,18 @@
 -[ARDUINO FLIGHT CONTROLLER] improve calculation of 'relativeOrientationRadians' because right now this method kinda sucks
 	-holy shit... are the value of 'degreesPerSecond' ACTUALLY in radiansPerSecond???...
 -[ARDUINO FLIGHT CONTROLLER] calibrate accelerometer during setup
---------------------------- DONE ----------------------------------------------
+-purchase necessary drone parts for the next phase of development
+	-jumper wire headers for my old radio's Rx module
+		[$2] https://www.sparkfun.com/products/10368
+	-28-pin dip socket for the atmega
+		[$1] https://www.sparkfun.com/products/7942
 -[ARDUINO FLIGHT CONTROLLER] apply a median filter to the accelerometer (maybe like ~10-15ish frames long?)
+--------------------------- DONE ----------------------------------------------
 -[ARDUINO FLIGHT CONTROLLER] calculate roll/pitch based on accelerometer using equation 25/26 in the AN3461.pdf document
 -[ARDUINO FLIGHT CONTROLLER] apply a complementary filter on the filtered gyro+accelerometer data (~99.5% gyro | ~0.5% accelerometer to start)
+-[ARDUINO FLIGHT CONTROLLER] figure out how to read & interpret the output of my old radio's Rx unit...
+	http://rcarduino.blogspot.com/2012/01/how-to-read-rc-receiver-with.html
+	http://rcarduino.blogspot.com/2012/04/how-to-read-multiple-rc-channels-draft.html
 -[ARDUINO FLIGHT CONTROLLER] Figure out how to communicate to ESCs
 	https://oscarliang.com/esc-firmware-protocols/
 	https://oscarliang.com/oneshot125-esc-quadcopter-fpv/
@@ -44,13 +52,7 @@
 		[$60] ISDT Q6 Pro BattGo 300W 14A Battery Balance Charger  https://www.getfpv.com/isdt-q6-pro-battgo-300w-14a-battery-balance-charger.html
 	-charger power cable because apparently they don't come w/ the charger?? lol
 		[$50] Power Supply for Battery Charger - 400w 16.7A 24V w/ XT60 https://www.getfpv.com/led-power-supply-400w-16-7a-24v-w-xt60.html
-	-jumper wire headers for my old radio's Rx module
-		[$2] https://www.sparkfun.com/products/10368 ???
-	-28-pin dip socket for the atmega
-		[$1] https://www.sparkfun.com/products/7942
 	-whip antenna tube that's long enough to keep the antenna out of the props
 		[$5] https://www.amazon.com/Traxxas-1726-Antenna-Vinyl-Retainer/dp/B000BOKC2G/ref=sr_1_3?keywords=rc+hobby+antenna+tube+long&qid=1575161328&sr=8-3
--[ARDUINO FLIGHT CONTROLLER] figure out how to read & interpret the output of my old radio's Rx unit...
-	http://rcarduino.blogspot.com/2012/01/how-to-read-rc-receiver-with.html
 -[ARDUINO FLIGHT CONTROLLER] figure out how to support custom PID tuning
 	https://oscarliang.com/quadcopter-pid-explained-tuning/

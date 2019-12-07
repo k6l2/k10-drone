@@ -68,6 +68,22 @@ v3f relativeOrientationRadians = {0,0,0};
 static const size_t NUM_CALIBRATION_ITERATIONS = 30;
 v3f calibrationOffsetGyro  = {0,0,0};
 v3f calibrationOffsetAccel = {0,0,0};
+// gForceMedianFilterBuffer should be used as a circular buffer
+static const size_t G_FORCE_MEDIAN_FILTER_BUFFER_SIZE = 10;
+v3f gForceMedianFilterBuffer[G_FORCE_MEDIAN_FILTER_BUFFER_SIZE];
+size_t gForceMedianFilterBufferOffset = 0;
+v3f gForceMedian = {0,0,0};
+void scaleRawMotionData()
+{
+  // thanks to sasebot-sensei: https://electronics.stackexchange.com/a/176705
+  // Also, offset raw values by calibrated amounts calculated during setup
+  gForce.x = (v3Accel.x - calibrationOffsetAccel.x) * scaleAccel;
+  gForce.y = (v3Accel.y - calibrationOffsetAccel.y) * scaleAccel;
+  gForce.z = (v3Accel.z - calibrationOffsetAccel.z) * scaleAccel;
+  radiansPerSecond.x = (v3Gyro.x - calibrationOffsetGyro.x) * scaleGyro;
+  radiansPerSecond.y = (v3Gyro.y - calibrationOffsetGyro.y) * scaleGyro;
+  radiansPerSecond.z = (v3Gyro.z - calibrationOffsetGyro.z) * scaleGyro;
+}
 void setup()
 {
   // Start the atmega's serial monitor so we can examine the COM port output
@@ -122,7 +138,7 @@ void setup()
     //  since it is assumed that the drone is flat on the ground
     //  during calibration //
     calibrationOffsetAccel.z += (v3Accel.z - (1/scaleAccel));
-    delay(SENSOR_READ_DELTA_MICROSECONDS / 1000);
+    delay(1);
   }
   calibrationOffsetGyro.x /= NUM_CALIBRATION_ITERATIONS;
   calibrationOffsetGyro.y /= NUM_CALIBRATION_ITERATIONS;
@@ -136,6 +152,16 @@ void setup()
   Serial.print(calibrationOffsetAccel.x); Serial.print("\t");
   Serial.print(calibrationOffsetAccel.y); Serial.print("\t");
   Serial.print(calibrationOffsetAccel.z); Serial.print("\n");
+  // build the initial state of our gForce median filter buffer using
+  //  the calibration data we just extracted //
+  for(size_t c = 0; c < G_FORCE_MEDIAN_FILTER_BUFFER_SIZE; c++)
+  {
+    motion.getMotion6(&v3Accel.x, &v3Accel.y, &v3Accel.z,
+                      &v3Gyro.x , &v3Gyro.y , &v3Gyro.z);
+    scaleRawMotionData();
+    gForceMedianFilterBuffer[c] = gForce;
+    delay(1);
+  }
   Serial.println("---Calibration complete!---");
 }
 void updateRelativeOrientation(float deltaSeconds)
@@ -161,16 +187,41 @@ void updateRelativeOrientation(float deltaSeconds)
   relativeOrientationRadians.z += degreesPerSecond.z*(PI/180)*deltaSeconds;
   */
 }
-void scaleRawMotionData()
+int sortFloatsDecending(void const* floatA, void const* floatB)
 {
-  // thanks to sasebot-sensei: https://electronics.stackexchange.com/a/176705
-  // Also, offset raw values by calibrated amounts calculated during setup
-  gForce.x = (v3Accel.x - calibrationOffsetAccel.x) * scaleAccel;
-  gForce.y = (v3Accel.y - calibrationOffsetAccel.y) * scaleAccel;
-  gForce.z = (v3Accel.z - calibrationOffsetAccel.z) * scaleAccel;
-  radiansPerSecond.x = (v3Gyro.x - calibrationOffsetGyro.x) * scaleGyro;
-  radiansPerSecond.y = (v3Gyro.y - calibrationOffsetGyro.y) * scaleGyro;
-  radiansPerSecond.z = (v3Gyro.z - calibrationOffsetGyro.z) * scaleGyro;
+  // Thanks, Johnny-sensei: https://arduino.stackexchange.com/a/38179
+  float const a = *((float*)floatA);
+  float const b = *((float*)floatB);
+  return a > b ? -1 : (a < b ? 1 : 0);
+}
+void applyGForceMedianFilter()
+{
+  float gForceMedianFilterBufferX[G_FORCE_MEDIAN_FILTER_BUFFER_SIZE];
+  float gForceMedianFilterBufferY[G_FORCE_MEDIAN_FILTER_BUFFER_SIZE];
+  float gForceMedianFilterBufferZ[G_FORCE_MEDIAN_FILTER_BUFFER_SIZE];
+  // Add the next gForce data point to the gForceMedianFilterBuffer and circle
+  //  the gForceMedianFilterBufferOffset to the next value
+  gForceMedianFilterBuffer[gForceMedianFilterBufferOffset] = gForce;
+  gForceMedianFilterBufferOffset++;
+  gForceMedianFilterBufferOffset %= G_FORCE_MEDIAN_FILTER_BUFFER_SIZE;
+  // Copy the median filter buffer to local storage
+  for(size_t c = 0; c < G_FORCE_MEDIAN_FILTER_BUFFER_SIZE; c++)
+  {
+    gForceMedianFilterBufferX[c] = gForceMedianFilterBuffer[c].x;
+    gForceMedianFilterBufferY[c] = gForceMedianFilterBuffer[c].y;
+    gForceMedianFilterBufferZ[c] = gForceMedianFilterBuffer[c].z;
+  }
+  // Sort the local copy of the buffer
+  qsort(gForceMedianFilterBufferX, G_FORCE_MEDIAN_FILTER_BUFFER_SIZE,
+        sizeof(gForceMedianFilterBufferX[0]), sortFloatsDecending);
+  qsort(gForceMedianFilterBufferY, G_FORCE_MEDIAN_FILTER_BUFFER_SIZE,
+        sizeof(gForceMedianFilterBufferY[0]), sortFloatsDecending);
+  qsort(gForceMedianFilterBufferZ, G_FORCE_MEDIAN_FILTER_BUFFER_SIZE,
+        sizeof(gForceMedianFilterBufferZ[0]), sortFloatsDecending);
+  // Write the median gForce value out to some piece of memory
+  gForceMedian.x = gForceMedianFilterBufferX[G_FORCE_MEDIAN_FILTER_BUFFER_SIZE/2];
+  gForceMedian.y = gForceMedianFilterBufferY[G_FORCE_MEDIAN_FILTER_BUFFER_SIZE/2];
+  gForceMedian.z = gForceMedianFilterBufferZ[G_FORCE_MEDIAN_FILTER_BUFFER_SIZE/2];
 }
 void loop() 
 {
@@ -181,17 +232,16 @@ void loop()
     motion.getMotion6(&v3Accel.x, &v3Accel.y, &v3Accel.z,
                       &v3Gyro.x , &v3Gyro.y , &v3Gyro.z);
     scaleRawMotionData();
+    applyGForceMedianFilter();
     //compass.getHeading(&v3Compass.x, &v3Compass.y, &v3Compass.z);
     updateRelativeOrientation(deltaMicroseconds / 1000000.f);
     bluetooth.write("FCTP");
     unsigned long const currMicros = micros();
-    bluetooth.write((uint8_t const*)&currMicros, sizeof(currMicros));
+    bluetooth.write((uint8_t const*)&currMicros       , sizeof(currMicros));
     bluetooth.write((uint8_t const*)&deltaMicroseconds, sizeof(deltaMicroseconds));
-    bluetooth.write((uint8_t const*)&gForce, sizeof(gForce));
-    bluetooth.write((uint8_t const*)&radiansPerSecond, 
-                    sizeof(radiansPerSecond));
-//    bluetooth.write((uint8_t const*)&relativeOrientationRadians, 
-//                    sizeof(relativeOrientationRadians));
+    bluetooth.write((uint8_t const*)&gForce           , sizeof(gForce));
+    bluetooth.write((uint8_t const*)&gForceMedian     , sizeof(gForceMedian));
+    bluetooth.write((uint8_t const*)&radiansPerSecond , sizeof(radiansPerSecond));
     bluetooth.write((uint8_t const*)&relativeOrientationRadians, 
                     sizeof(relativeOrientationRadians));
     lastSensorReadMicroseconds = micros();

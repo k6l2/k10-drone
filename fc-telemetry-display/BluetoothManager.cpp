@@ -150,6 +150,15 @@ void BluetoothManager::drawImGuiFrameMetrics() const
 	ImGui::PlotLines("gForceZ", frameGForceZ.data(),
 					 static_cast<int>(maxFrameMetricCount),
 					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("gForceMedianX", frameGForceMedianX.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("gForceMedianY", frameGForceMedianY.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
+	ImGui::PlotLines("gForceMedianZ", frameGForceMedianZ.data(),
+					 static_cast<int>(maxFrameMetricCount),
+					 frameMetricsOffset, nullptr, FLT_MAX, FLT_MAX, { 0,100 });
 	ImGui::End();
 }
 int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
@@ -222,24 +231,18 @@ int BluetoothManager::bluetoothManagerThreadMain(void* pBluetoothManager)
 							// append new telemetry data to GUI buffers //
 							btm->frameMicrosecondsDelta[btm->frameMetricsOffset] =
 								static_cast<float>(btm->latestCompleteTelemetryPacket.microsecondsDelta);
-							btm->frameRadiansPerSecondX[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.radiansPerSecond.x;
-							btm->frameRadiansPerSecondY[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.radiansPerSecond.y;
-							btm->frameRadiansPerSecondZ[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.radiansPerSecond.z;
-							btm->frameRelativeOrientationRadiansX[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.relativeOrientationRadians.x;
-							btm->frameRelativeOrientationRadiansY[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.relativeOrientationRadians.y;
-							btm->frameRelativeOrientationRadiansZ[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.relativeOrientationRadians.z;
-							btm->frameGForceX[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.gForce.x;
-							btm->frameGForceY[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.gForce.y;
-							btm->frameGForceZ[btm->frameMetricsOffset] =
-								btm->latestCompleteTelemetryPacket.gForce.z;
+							btm->frameRadiansPerSecondX[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.radiansPerSecond.x;
+							btm->frameRadiansPerSecondY[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.radiansPerSecond.y;
+							btm->frameRadiansPerSecondZ[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.radiansPerSecond.z;
+							btm->frameRelativeOrientationRadiansX[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.relativeOrientationRadians.x;
+							btm->frameRelativeOrientationRadiansY[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.relativeOrientationRadians.y;
+							btm->frameRelativeOrientationRadiansZ[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.relativeOrientationRadians.z;
+							btm->frameGForceX[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.gForce.x;
+							btm->frameGForceY[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.gForce.y;
+							btm->frameGForceZ[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.gForce.z;
+							btm->frameGForceMedianX[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.gForceMedian.x;
+							btm->frameGForceMedianY[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.gForceMedian.y;
+							btm->frameGForceMedianZ[btm->frameMetricsOffset] = btm->latestCompleteTelemetryPacket.gForceMedian.z;
 							btm->frameMetricsOffset = 
 								(btm->frameMetricsOffset + 1) % 
 									btm->maxFrameMetricCount;
