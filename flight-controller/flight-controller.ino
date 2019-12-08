@@ -166,9 +166,31 @@ void setup()
 }
 void updateRelativeOrientation(float deltaSeconds)
 {
-  relativeOrientationRadians.x += radiansPerSecond.x*deltaSeconds;
-  relativeOrientationRadians.y += radiansPerSecond.y*deltaSeconds;
-  relativeOrientationRadians.z += radiansPerSecond.z*deltaSeconds;
+  // naive gyroscope integration //
+//  relativeOrientationRadians.x += radiansPerSecond.x*deltaSeconds;
+//  relativeOrientationRadians.y += radiansPerSecond.y*deltaSeconds;
+//  relativeOrientationRadians.z += radiansPerSecond.z*deltaSeconds;
+  const v3f gyroDelta = {
+    radiansPerSecond.x*deltaSeconds,
+    radiansPerSecond.y*deltaSeconds,
+    radiansPerSecond.z*deltaSeconds
+  };
+  // accelerometer angle change calculations using equations 25 & 26
+  //  from this paper: https://www.nxp.com/docs/en/application-note/AN3461.pdf
+  const float accelPhi   = atan2f(gForceMedian.y, gForceMedian.z);
+  const float accelTheta = atan2f(-gForceMedian.x, 
+                                  sqrtf(powf(gForceMedian.y,2) + 
+                                        powf(gForceMedian.z,2)));
+//  relativeOrientationRadians.x += accelPhi;
+//  relativeOrientationRadians.y += accelTheta;
+  // Complementary filter - combine the gyroscope w/ filtered accelerometer //
+  static const float GYRO_PART = 0.995;
+  relativeOrientationRadians.x = 
+    GYRO_PART       * (relativeOrientationRadians.x + gyroDelta.x) +
+    (1 - GYRO_PART) * accelPhi;
+  relativeOrientationRadians.y = 
+    GYRO_PART       * (relativeOrientationRadians.y + gyroDelta.y) +
+    (1 - GYRO_PART) * accelTheta;
   /*
   // Derived from: https://www.w3.org/TR/motion-sensors/#complementary-filters
   static const float ACCEL_SCALE = PI / 2;

@@ -26,9 +26,10 @@
 	-28-pin dip socket for the atmega
 		[$1] https://www.sparkfun.com/products/7942
 -[ARDUINO FLIGHT CONTROLLER] apply a median filter to the accelerometer (maybe like ~10-15ish frames long?)
---------------------------- DONE ----------------------------------------------
 -[ARDUINO FLIGHT CONTROLLER] calculate roll/pitch based on accelerometer using equation 25/26 in the AN3461.pdf document
 -[ARDUINO FLIGHT CONTROLLER] apply a complementary filter on the filtered gyro+accelerometer data (~99.5% gyro | ~0.5% accelerometer to start)
+--------------------------- DONE ----------------------------------------------
+-[ARDUINO FLIGHT CONTROLLER] God the AN3461 document is such a shitty resource.. these results are terrible!  Need to go back to the old e3.org resource and see if I can get a better complementary filter
 -[ARDUINO FLIGHT CONTROLLER] figure out how to read & interpret the output of my old radio's Rx unit...
 	http://rcarduino.blogspot.com/2012/01/how-to-read-rc-receiver-with.html
 	http://rcarduino.blogspot.com/2012/04/how-to-read-multiple-rc-channels-draft.html

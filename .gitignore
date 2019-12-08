@@ -4,3 +4,4 @@ fc-telemetry-display/shader-bins
 fc-telemetry-display/imgui.ini
 fc-telemetry-display/Debug
 fc-telemetry-display/Release
+flight-controller/debug.log
