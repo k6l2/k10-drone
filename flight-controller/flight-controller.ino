@@ -177,37 +177,36 @@ void updateRelativeOrientation(float deltaSeconds)
   };
   // accelerometer angle change calculations using equations 25 & 26
   //  from this paper: https://www.nxp.com/docs/en/application-note/AN3461.pdf
-  const float accelPhi   = atan2f(gForceMedian.y, gForceMedian.z);
-  const float accelTheta = atan2f(-gForceMedian.x, 
-                                  sqrtf(powf(gForceMedian.y,2) + 
-                                        powf(gForceMedian.z,2)));
+//  const float accelPhi   = atan2f(gForceMedian.y, gForceMedian.z);
+//  const float accelTheta = atan2f(-gForceMedian.x, 
+//                                  sqrtf(powf(gForceMedian.y,2) + 
+//                                        powf(gForceMedian.z,2)));
 //  relativeOrientationRadians.x += accelPhi;
 //  relativeOrientationRadians.y += accelTheta;
   // Complementary filter - combine the gyroscope w/ filtered accelerometer //
-  static const float GYRO_PART = 0.995;
-  relativeOrientationRadians.x = 
-    GYRO_PART       * (relativeOrientationRadians.x + gyroDelta.x) +
-    (1 - GYRO_PART) * accelPhi;
-  relativeOrientationRadians.y = 
-    GYRO_PART       * (relativeOrientationRadians.y + gyroDelta.y) +
-    (1 - GYRO_PART) * accelTheta;
-  /*
+//  static const float GYRO_PART = 0.995;
+//  relativeOrientationRadians.x = 
+//    GYRO_PART       * (relativeOrientationRadians.x + gyroDelta.x) +
+//    (1 - GYRO_PART) * accelPhi;
+//  relativeOrientationRadians.y = 
+//    GYRO_PART       * (relativeOrientationRadians.y + gyroDelta.y) +
+//    (1 - GYRO_PART) * accelTheta;
   // Derived from: https://www.w3.org/TR/motion-sensors/#complementary-filters
   static const float ACCEL_SCALE = PI / 2;
+  static const float GYRO_BIAS = 0.98;
   const float gForceMag = sqrtf(gForce.x*gForce.x + 
                                 gForce.y*gForce.y + 
                                 gForce.z*gForce.z);
   if(gForceMag > 0)
   {
     relativeOrientationRadians.x = 
-           REL_ORIENT_UPDATE_BIAS *(relativeOrientationRadians.x + degreesPerSecond.x*(PI/180)*deltaSeconds) +
-      (1 - REL_ORIENT_UPDATE_BIAS)*(gForce.x / gForceMag *  ACCEL_SCALE);
+           GYRO_BIAS *(relativeOrientationRadians.x + gyroDelta.x) +
+      (1 - GYRO_BIAS)*(gForce.x / gForceMag *  ACCEL_SCALE);
     relativeOrientationRadians.y = 
-           REL_ORIENT_UPDATE_BIAS *(relativeOrientationRadians.y + degreesPerSecond.y*(PI/180)*deltaSeconds) +
-      (1 - REL_ORIENT_UPDATE_BIAS)*(gForce.y / gForceMag * -ACCEL_SCALE);
+           GYRO_BIAS *(relativeOrientationRadians.y + gyroDelta.y) +
+      (1 - GYRO_BIAS)*(gForce.y / gForceMag * -ACCEL_SCALE);
   }
-  relativeOrientationRadians.z += degreesPerSecond.z*(PI/180)*deltaSeconds;
-  */
+  relativeOrientationRadians.z += gyroDelta.z;
 }
 int sortFloatsDecending(void const* floatA, void const* floatB)
 {

@@ -29,7 +29,9 @@
 -[ARDUINO FLIGHT CONTROLLER] calculate roll/pitch based on accelerometer using equation 25/26 in the AN3461.pdf document
 -[ARDUINO FLIGHT CONTROLLER] apply a complementary filter on the filtered gyro+accelerometer data (~99.5% gyro | ~0.5% accelerometer to start)
 --------------------------- DONE ----------------------------------------------
--[ARDUINO FLIGHT CONTROLLER] God the AN3461 document is such a shitty resource.. these results are terrible!  Need to go back to the old e3.org resource and see if I can get a better complementary filter
+-[ARDUINO FLIGHT CONTROLLER] God the AN3461 document is such a shitty resource.. these results are terrible!
+	-Maybe use this paper: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6111698/
+	-This might be a good applied example? http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/
 -[ARDUINO FLIGHT CONTROLLER] figure out how to read & interpret the output of my old radio's Rx unit...
 	http://rcarduino.blogspot.com/2012/01/how-to-read-rc-receiver-with.html
 	http://rcarduino.blogspot.com/2012/04/how-to-read-multiple-rc-channels-draft.html
