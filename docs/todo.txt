@@ -29,6 +29,9 @@
 -[ARDUINO FLIGHT CONTROLLER] calculate roll/pitch based on accelerometer using equation 25/26 in the AN3461.pdf document
 -[ARDUINO FLIGHT CONTROLLER] apply a complementary filter on the filtered gyro+accelerometer data (~99.5% gyro | ~0.5% accelerometer to start)
 --------------------------- DONE ----------------------------------------------
+[ ] create a new telemetry display application using KORL
+[ ] add bluetooth support to KORL
+[ ] connect to the bluetooth modem & display data in KORL fc-telemetry-display
 -[ARDUINO FLIGHT CONTROLLER] God the AN3461 document is such a shitty resource.. these results are terrible!
 	-Maybe use this paper: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6111698/
 	-This might be a good applied example? http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/
