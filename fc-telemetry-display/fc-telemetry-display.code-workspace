@@ -1,0 +1,41 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "KGT Code Utilities",
+			"path": "C:/git/korl/code-utilities"
+			/* apparently VsCode does not support environment variable 
+				resolution in *.code-workspace files...
+				https://github.com/microsoft/vscode/issues/44755 */
+			//"path": "${env:korl_home}/code-utilities"
+		},
+		{
+			"name": "KORL Code",
+			"path": "C:/git/korl/code"
+			/* apparently VsCode does not support environment variable 
+				resolution in *.code-workspace files...
+				https://github.com/microsoft/vscode/issues/44755 */
+			//"path": "${env:korl_home}/code"
+		},
+		{
+			"name": "KORL Misc.",
+			"path": "C:/git/korl/misc"
+			/* apparently VsCode does not support environment variable 
+				resolution in *.code-workspace files...
+				https://github.com/microsoft/vscode/issues/44755 */
+			//"path": "${env:korl_home}/misc"
+		}
+	],
+	"settings": {
+		"C_Cpp.default.cppStandard": "c++20",
+		"C_Cpp.default.includePath": 
+			[ "${env:project_root}/code"
+			, "${env:project_root}/build/code"
+			, "${env:korl_home}/code-utilities"
+			, "${env:korl_home}/code" ],
+		"C_Cpp.default.defines": 
+			[ "INTERNAL_BUILD=1;SLOW_BUILD=1;KORL_MINIMUM_FRAME_RATE=30" ]
+	}
+}
