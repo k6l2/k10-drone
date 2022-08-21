@@ -21,6 +21,8 @@ KORL_GAME_API KORL_GAME_INITIALIZE(korl_game_initialize)
 }
 KORL_GAME_API KORL_GAME_ON_KEYBOARD_EVENT(korl_game_onKeyboardEvent)
 {
+    if(keyCode == KORL_KEY_ESCAPE && isDown && !isRepeat)
+        fctd_memory->continueProgramExecution = false;
 }
 KORL_GAME_API KORL_GAME_ON_MOUSE_EVENT(korl_game_onMouseEvent)
 {
