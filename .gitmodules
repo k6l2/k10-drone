@@ -1,3 +1,6 @@
 [submodule "flight-controller/submodules/i2cdevlib"]
 	path = flight-controller/submodules/i2cdevlib
 	url = https://github.com/jrowberg/i2cdevlib.git
+[submodule "fc-telemetry-display/submodules/korl"]
+	path = fc-telemetry-display/submodules/korl
+	url = https://github.com/k6l2/korl.git
