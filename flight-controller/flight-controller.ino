@@ -6,18 +6,21 @@
  *  -GY-87
  *    http://kom.aau.dk/~jdn/edu/doc/sensors/gy80gy87gy88/
  * This sketch will require the GY-87 board use the following connections
- *  on the Arduino Uno:
- *    SDA => A4
- *    SCL => A5
+ *   on the Arduino Uno:
+ *     SDA => A4
+ *     SCL => A5
+ * The Bluesmirf Silver pins are defined below as static constants.
  * I am going to take a lot of code from this repo:
- * https://github.com/guywithaview/Arduino-Test/blob/master/GY87/GY87.ino
+ *   https://github.com/guywithaview/Arduino-Test/blob/master/GY87/GY87.ino
  * Another sketch using the GY-87 can be found here:
- * http://www.techmonkeybusiness.com/the-gy87-combined-sensor-test-sketch.html
- *    But this seems out-of-date and probably isn't too useful.
+ *   http://www.techmonkeybusiness.com/the-gy87-combined-sensor-test-sketch.html
+ *   But this seems out-of-date and probably isn't too useful.
+ * Another example of using the GY-87:
+ *   https://electropeak.com/learn/interfacing-gy-87-10dof-imu-mpu6050-hmc5883l-bmp085-module-with-arduino/
  * Using I2CDevLib found here:
- * https://github.com/jrowberg/i2cdevlib
+ *   https://github.com/jrowberg/i2cdevlib
  * rudimentary info on the Wire Library can be found here:
- * https://www.arduino.cc/en/reference/wire
+ *   https://www.arduino.cc/en/reference/wire
  */
 #include <SoftwareSerial.h>
 #include <Wire.h>
