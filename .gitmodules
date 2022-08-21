@@ -1,0 +1,3 @@
+[submodule "flight-controller/submodules/i2cdevlib"]
+	path = flight-controller/submodules/i2cdevlib
+	url = https://github.com/jrowberg/i2cdevlib.git

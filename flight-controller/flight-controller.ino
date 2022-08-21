@@ -55,11 +55,11 @@ struct v3f
 // see MPU6050::initialize for why this variable is initialized to this value
 //  The sensor's register returns a signed-16-bit #, and that range must be
 //  divided by the maximum possible value (2G)
-float scaleAccel = 1.f / (0x7FFF / 2.f);
+float scaleAccel = 1.f / (0x7FFF / 2.f/*G*/);
 // see MPU6050::initialize for why this variable is initialized to this value
 //  The sensor's register returns a signed-16-bit #, and that range must be
 //  divided by the maximum possible value (250 radians/second)
-float scaleGyro  = 1.f / (0x7FFF / 250.f);
+float scaleGyro  = 1.f / (0x7FFF / 250.f/*radians/second*/);
 // properly scaled v3Accel values, where a magnitude of 1 == 9.81 m/s^2 (1g)
 v3f gForce;
 // properly scaled v3Gyro values
@@ -110,17 +110,17 @@ void setup()
   Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
   // increase the gyro's range (decrease sensitivity)
   motion.setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
-  scaleGyro  = 1.f / (0x7FFF / 1000.f);
+  scaleGyro  = 1.f / (0x7FFF / 1000.f/*radians/second*/);
   // in order to use the HMC5883L, we need to enable an I2C bypass
   motion.setI2CBypassEnabled(true);
   // initialize the HMC5883L chip on the GY-87
   compass.initialize();
   Serial.print("Compass connection............... ");
-  Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
+  Serial.println(compass.testConnection() ? "Success!" : "FAILURE!!!");
   // initialize the BMP085 chip on the GY-87
   barothermometer.initialize();
   Serial.print("Barothermometer connection....... ");
-  Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
+  Serial.println(barothermometer.testConnection() ? "Success!" : "FAILURE!!!");
   Serial.println("---Setup complete!---");
   // sensor 'calibration': read a bunch of data from the sensors so
   //  we can offset by the average of this data during runtime //
