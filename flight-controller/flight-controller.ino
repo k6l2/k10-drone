@@ -89,36 +89,36 @@ void setup()
   // Start the atmega's serial monitor so we can examine the COM port output
   Serial.begin(9600);
   Serial.println("---Drone Flight Controller---");
-  // the bluesmirf starts w/ a baud of 115200
-  bluetooth.begin(115200);
-  // enter command mode
-  bluetooth.print("$$$");
-  // wait for the modem to send back "CMD"
-  delay(100);
-  // U command changes the UART and immediately exits command mode
-  //  first parameter is a 4-character baud rate
-  //  second parameter is parity (E, O or N)
-  bluetooth.println("U,9600,N");
-  // switch the bluetooth serial to 9600 baud.  We do this because apparently
-  //  115200 baud can be too fast for NewSoftSerial to relay data reliably
-  bluetooth.begin(9600);
-  // Initialize the I2C bus
-  Wire.begin();
-  // Initialize the MPU6050 chip on the GY-87
-  motion.initialize();
+  Serial.println("Configuring bluetooth modem to 9600 baud...");
+  bluetooth.begin(115200);// the bluesmirf starts w/ a baud of 115200
+  bluetooth.print("$$$");// enter command mode
+  delay(100);// wait for the modem to send back "CMD"
+  bluetooth.println("U,9600,N");// U command changes the UART and immediately exits command mode
+                                //  first parameter is a 4-character baud rate
+                                //  second parameter is parity (E, O or N)
+  bluetooth.begin(9600);// switch the bluetooth serial to 9600 baud.  We do this because apparently
+                        //  115200 baud can be too fast for NewSoftSerial to relay data reliably
+  Serial.println("Reprogramming bluetooth modem credentials...");
+  bluetooth.print("$$$");// enter command mode
+  delay(100);// wait for the modem to send back "CMD"
+  bluetooth.println("S-,""K6L2-QuadFcData");// set the bluetooth device name, auto-appending the last 2 bytes of the modem's MAC address
+  delay(100);// wait for the modem to send back "AOK"
+  bluetooth.println("SP,""6942");// set the bluetooth PIN
+  delay(100);// wait for the modem to send back "AOK"
+  bluetooth.println("---");// leave command mode
+  delay(100);// wait for the modem to send back "END"
+  Serial.println("---Bluetooth Modem Configured---");
+  Wire.begin();// Initialize the I2C bus
+  motion.initialize();// Initialize the MPU6050 chip on the GY-87
   Serial.print("Accellerometer/Gyro connection... ");
   Serial.println(motion.testConnection() ? "Success!" : "FAILURE!!!");
-  // increase the gyro's range (decrease sensitivity)
-  motion.setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
-  scaleGyro  = 1.f / (0x7FFF / 1000.f/*radians/second*/);
-  // in order to use the HMC5883L, we need to enable an I2C bypass
-  motion.setI2CBypassEnabled(true);
-  // initialize the HMC5883L chip on the GY-87
-  compass.initialize();
+  motion.setFullScaleGyroRange(MPU6050_GYRO_FS_1000);   // increase the gyro's range (decrease sensitivity)
+  scaleGyro = 1.f / (0x7FFF / 1000.f/*radians/second*/);// since we changed the device scale, we have to change our f32 scale factor
+  motion.setI2CBypassEnabled(true);// in order to use the HMC5883L, we need to enable an I2C bypass
+  compass.initialize();// initialize the HMC5883L chip on the GY-87
   Serial.print("Compass connection............... ");
   Serial.println(compass.testConnection() ? "Success!" : "FAILURE!!!");
-  // initialize the BMP085 chip on the GY-87
-  barothermometer.initialize();
+  barothermometer.initialize();// initialize the BMP085 chip on the GY-87
   Serial.print("Barothermometer connection....... ");
   Serial.println(barothermometer.testConnection() ? "Success!" : "FAILURE!!!");
   Serial.println("---Setup complete!---");
@@ -199,12 +199,10 @@ void updateRelativeOrientation(float deltaSeconds)
                                 gForce.z*gForce.z);
   if(gForceMag > 0)
   {
-    relativeOrientationRadians.x = 
-           GYRO_BIAS *(relativeOrientationRadians.x + gyroDelta.x) +
-      (1 - GYRO_BIAS)*(gForce.x / gForceMag *  ACCEL_SCALE);
-    relativeOrientationRadians.y = 
-           GYRO_BIAS *(relativeOrientationRadians.y + gyroDelta.y) +
-      (1 - GYRO_BIAS)*(gForce.y / gForceMag * -ACCEL_SCALE);
+    relativeOrientationRadians.x =      GYRO_BIAS *(relativeOrientationRadians.x + gyroDelta.x) 
+                                 + (1 - GYRO_BIAS)*(gForce.x / gForceMag *  ACCEL_SCALE);
+    relativeOrientationRadians.y =      GYRO_BIAS *(relativeOrientationRadians.y + gyroDelta.y) 
+                                 + (1 - GYRO_BIAS)*(gForce.y / gForceMag * -ACCEL_SCALE);
   }
   relativeOrientationRadians.z += gyroDelta.z;
 }
@@ -258,13 +256,12 @@ void loop()
     updateRelativeOrientation(deltaMicroseconds / 1000000.f);
     bluetooth.write("FCTP");
     unsigned long const currMicros = micros();
-    bluetooth.write((uint8_t const*)&currMicros       , sizeof(currMicros));
-    bluetooth.write((uint8_t const*)&deltaMicroseconds, sizeof(deltaMicroseconds));
-    bluetooth.write((uint8_t const*)&gForce           , sizeof(gForce));
-    bluetooth.write((uint8_t const*)&gForceMedian     , sizeof(gForceMedian));
-    bluetooth.write((uint8_t const*)&radiansPerSecond , sizeof(radiansPerSecond));
-    bluetooth.write((uint8_t const*)&relativeOrientationRadians, 
-                    sizeof(relativeOrientationRadians));
+    bluetooth.write((uint8_t const*)&currMicros                , sizeof(currMicros));
+    bluetooth.write((uint8_t const*)&deltaMicroseconds         , sizeof(deltaMicroseconds));
+    bluetooth.write((uint8_t const*)&gForce                    , sizeof(gForce));
+    bluetooth.write((uint8_t const*)&gForceMedian              , sizeof(gForceMedian));
+    bluetooth.write((uint8_t const*)&radiansPerSecond          , sizeof(radiansPerSecond));
+    bluetooth.write((uint8_t const*)&relativeOrientationRadians, sizeof(relativeOrientationRadians));
     lastSensorReadMicroseconds = micros();
   }
   if(bluetooth.available())
