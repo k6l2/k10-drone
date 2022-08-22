@@ -3,6 +3,7 @@
 #include "korl-math.h"
 KORL_INTERFACE_PLATFORM_API_DECLARE;
 #define KORL_DEFINED_INTERFACE_PLATFORM_API
+#include "korl-stb-ds.h"
 using V3f32 = Korl_Math_V3f32;
 using Quat  = Korl_Math_Quaternion;
 using Batch = Korl_Gfx_Batch;
@@ -18,7 +19,8 @@ KORL_GAME_API KORL_GAME_INITIALIZE(korl_game_initialize)
     korl_memory_zero(fctd_memory, sizeof(*fctd_memory));
     fctd_memory->continueProgramExecution = true;
     fctd_memory->camera                   = korl_gfx_createCameraFov(90, 1, 1'000, {CAMERA_DISTANCE,0,0}, KORL_MATH_V3F32_ZERO);
-    fctd_memory->allocatorStack           = korl_memory_allocator_create(KORL_MEMORY_ALLOCATOR_TYPE_LINEAR, korl_math_megabytes(8), L"fctd-stack", KORL_MEMORY_ALLOCATOR_FLAG_EMPTY_EVERY_FRAME, NULL/*auto-select address*/);
+    fctd_memory->allocatorStack           = korl_memory_allocator_create(KORL_MEMORY_ALLOCATOR_TYPE_LINEAR , korl_math_megabytes(8), L"fctd-stack", KORL_MEMORY_ALLOCATOR_FLAG_EMPTY_EVERY_FRAME   , NULL/*auto-select address*/);
+    fctd_memory->allocatorHeap            = korl_memory_allocator_create(KORL_MEMORY_ALLOCATOR_TYPE_GENERAL, korl_math_megabytes(8), L"fctd-heap" , KORL_MEMORY_ALLOCATOR_FLAG_SERIALIZE_SAVE_STATE, NULL/*auto-select address*/);
     korl_gui_setFontAsset(L"submodules/korl/c/test-assets/source-sans/SourceSans3-Semibold.otf");
 }
 KORL_GAME_API KORL_GAME_ON_KEYBOARD_EVENT(korl_game_onKeyboardEvent)
@@ -64,12 +66,12 @@ KORL_GAME_API KORL_GAME_ON_MOUSE_EVENT(korl_game_onMouseEvent)
             fctd_memory->camera.position *= korl_math_quaternion_fromAxisRadians(KORL_MATH_V3F32_Z, -0.01f*KORL_C_CAST(f32, mouseEvent.x), true);
             /* rotate the camera position around the `+Z.cross(cameraPosition)` axis by the mouse Y amount */
             const V3f32 yawAxis = korl_math_v3f32_normal(korl_math_v3f32_cross(&KORL_MATH_V3F32_Z, &fctd_memory->camera.position));
+            korl_assert(!korl_math_isNearlyZero(korl_math_v3f32_magnitudeSquared(&yawAxis)));
             // calculate the "forward" normal vector
-            korl_assert(!(   korl_math_isNearlyZero(fctd_memory->camera.position.x)
-                          && korl_math_isNearlyZero(fctd_memory->camera.position.y)));
             V3f32 forward = korl_math_v3f32_normal({ fctd_memory->camera.position.x
                                                    , fctd_memory->camera.position.y
                                                    , 0});
+            korl_assert(!korl_math_isNearlyZero(korl_math_v3f32_magnitudeSquared(&forward)));
             // find the angle between the forward vector & the cam position => current pitch
             f32 pitchRadians = korl_math_v3f32_radiansBetween(forward, fctd_memory->camera.position);
             pitchRadians *= fctd_memory->camera.position.z >= 0 ? -1.f : 1.f;
@@ -89,13 +91,24 @@ KORL_GAME_API KORL_GAME_ON_GAMEPAD_EVENT(korl_game_onGamepadEvent)
 }
 KORL_GAME_API KORL_GAME_UPDATE(korl_game_update)
 {
+#if KORL_DEBUG
     korl_gui_widgetTextFormat(L"camera.fov=%f", fctd_memory->camera.subCamera.perspective.fovHorizonDegrees);
     korl_gui_widgetTextFormat(L"mouseRotateCamera=%hs", fctd_memory->mouseRotateCamera ? "ON" : "OFF");
     korl_gui_widgetTextFormat(L"cameraPositionDistance=%f", korl_math_v3f32_magnitude(&fctd_memory->camera.position));
+#endif
     korl_gui_windowBegin(L"Connect Flight Controller Bluetooth", NULL, KORL_GUI_WINDOW_STYLE_FLAGS_DEFAULT);
         if(korl_gui_widgetButtonFormat(L"Query Paired Bluetooth Devices"))
         {
-            ///@TODO: ???
+            if(fctd_memory->stbDaLastBluetoothQuery)
+                mcarrfree(KORL_C_CAST(void*, fctd_memory->allocatorHeap), fctd_memory->stbDaLastBluetoothQuery);
+            fctd_memory->stbDaLastBluetoothQuery = korl_bluetooth_query(fctd_memory->allocatorHeap);
+        }
+        for(u$ b = 0; b < arrlenu(fctd_memory->stbDaLastBluetoothQuery); b++)
+        {
+            if(korl_gui_widgetButtonFormat(fctd_memory->stbDaLastBluetoothQuery[b].name))
+            {
+                ///@TODO: ask platform to connect to this device
+            }
         }
     korl_gui_windowEnd();
     korl_gfx_useCamera(fctd_memory->camera);
@@ -112,3 +125,7 @@ KORL_GAME_API KORL_GAME_ON_ASSET_RELOADED(korl_game_onAssetReloaded)
 }
 #include "korl-math.c"
 #include "korl-checkCast.c"
+#define STB_DS_IMPLEMENTATION
+#define STBDS_UNIT_TESTS // for the sake of detecting any other C++ warnings; we aren't going to actually run any of these tests
+#define STBDS_ASSERT(x) korl_assert(x)
+#include "stb/stb_ds.h"
