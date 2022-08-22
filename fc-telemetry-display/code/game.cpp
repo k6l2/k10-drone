@@ -4,8 +4,10 @@
 KORL_INTERFACE_PLATFORM_API_DECLARE;
 #define KORL_DEFINED_INTERFACE_PLATFORM_API
 using V3f32 = Korl_Math_V3f32;
+using Quat  = Korl_Math_Quaternion;
 using Batch = Korl_Gfx_Batch;
 korl_global_variable GameMemory* fctd_memory;
+korl_global_const f32 CAMERA_DISTANCE = 32;
 KORL_GAME_API KORL_GAME_ON_RELOAD(korl_game_onReload)
 {
     KORL_INTERFACE_PLATFORM_API_GET(korlApi);
@@ -15,7 +17,7 @@ KORL_GAME_API KORL_GAME_INITIALIZE(korl_game_initialize)
 {
     korl_memory_zero(fctd_memory, sizeof(*fctd_memory));
     fctd_memory->continueProgramExecution = true;
-    fctd_memory->camera                   = korl_gfx_createCameraFov(90, 1, 1'000, {20,20,20}, KORL_MATH_V3F32_ZERO);
+    fctd_memory->camera                   = korl_gfx_createCameraFov(90, 1, 1'000, {CAMERA_DISTANCE,0,0}, KORL_MATH_V3F32_ZERO);
     fctd_memory->allocatorStack           = korl_memory_allocator_create(KORL_MEMORY_ALLOCATOR_TYPE_LINEAR, korl_math_megabytes(8), L"fctd-stack", KORL_MEMORY_ALLOCATOR_FLAG_EMPTY_EVERY_FRAME, NULL/*auto-select address*/);
     korl_gui_setFontAsset(L"submodules/korl/c/test-assets/source-sans/SourceSans3-Semibold.otf");
 }
@@ -26,12 +28,70 @@ KORL_GAME_API KORL_GAME_ON_KEYBOARD_EVENT(korl_game_onKeyboardEvent)
 }
 KORL_GAME_API KORL_GAME_ON_MOUSE_EVENT(korl_game_onMouseEvent)
 {
+    switch(mouseEvent.type)
+    {
+    case KORL_MOUSE_EVENT_BUTTON_DOWN:{
+        switch(mouseEvent.which.button)
+        {
+        case KORL_MOUSE_BUTTON_RIGHT:{
+            fctd_memory->mouseRotateCamera = true;
+            break;}
+        default:{break;}
+        }
+        break;}
+    case KORL_MOUSE_EVENT_BUTTON_UP:{
+        switch(mouseEvent.which.button)
+        {
+        case KORL_MOUSE_BUTTON_RIGHT:{
+            fctd_memory->mouseRotateCamera = false;
+            break;}
+        default:{break;}
+        }
+        break;}
+    case KORL_MOUSE_EVENT_WHEEL:{
+        /* (de/in)crease camera FoV based on mouse scroll wheel amount */
+        fctd_memory->camera.subCamera.perspective.fovHorizonDegrees += -0.1f*KORL_C_CAST(f32, mouseEvent.which.wheel);
+        KORL_MATH_ASSIGN_CLAMP(fctd_memory->camera.subCamera.perspective.fovHorizonDegrees, 45, 125);
+        break;}
+    case KORL_MOUSE_EVENT_HWHEEL:{
+        break;}
+    case KORL_MOUSE_EVENT_MOVE:{
+        break;}
+    case KORL_MOUSE_EVENT_MOVE_RAW:{
+        if(fctd_memory->mouseRotateCamera)
+        {
+            /* rotate the camera position around the +Z axis by the mouse X amount */
+            fctd_memory->camera.position *= korl_math_quaternion_fromAxisRadians(KORL_MATH_V3F32_Z, -0.01f*KORL_C_CAST(f32, mouseEvent.x), true);
+            /* rotate the camera position around the `+Z.cross(cameraPosition)` axis by the mouse Y amount */
+            const V3f32 yawAxis = korl_math_v3f32_normal(korl_math_v3f32_cross(&KORL_MATH_V3F32_Z, &fctd_memory->camera.position));
+            // calculate the "forward" normal vector
+            korl_assert(!(   korl_math_isNearlyZero(fctd_memory->camera.position.x)
+                          && korl_math_isNearlyZero(fctd_memory->camera.position.y)));
+            V3f32 forward = korl_math_v3f32_normal({ fctd_memory->camera.position.x
+                                                   , fctd_memory->camera.position.y
+                                                   , 0});
+            // find the angle between the forward vector & the cam position => current pitch
+            f32 pitchRadians = korl_math_v3f32_radiansBetween(forward, fctd_memory->camera.position);
+            pitchRadians *= fctd_memory->camera.position.z >= 0 ? -1.f : 1.f;
+            // modify pitch using raw mouse Y
+            pitchRadians += -0.01f*KORL_C_CAST(f32, mouseEvent.y);
+            // clamp the pitch to a reasonable range
+            KORL_MATH_ASSIGN_CLAMP(pitchRadians, -KORL_PI32*0.45f, KORL_PI32*0.45f);
+            // calculate the new camera position by pitching the forward vector around the yawAxis
+            fctd_memory->camera.position = korl_math_quaternion_fromAxisRadians(yawAxis, pitchRadians, true)
+                                         * (CAMERA_DISTANCE * forward);
+        }
+        break;}
+    }
 }
 KORL_GAME_API KORL_GAME_ON_GAMEPAD_EVENT(korl_game_onGamepadEvent)
 {
 }
 KORL_GAME_API KORL_GAME_UPDATE(korl_game_update)
 {
+    korl_gui_widgetTextFormat(L"camera.fov=%f", fctd_memory->camera.subCamera.perspective.fovHorizonDegrees);
+    korl_gui_widgetTextFormat(L"mouseRotateCamera=%hs", fctd_memory->mouseRotateCamera ? "ON" : "OFF");
+    korl_gui_widgetTextFormat(L"cameraPositionDistance=%f", korl_math_v3f32_magnitude(&fctd_memory->camera.position));
     korl_gui_windowBegin(L"Connect Flight Controller Bluetooth", NULL, KORL_GUI_WINDOW_STYLE_FLAGS_DEFAULT);
         if(korl_gui_widgetButtonFormat(L"Query Paired Bluetooth Devices"))
         {
