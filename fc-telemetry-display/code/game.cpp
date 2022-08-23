@@ -96,21 +96,28 @@ KORL_GAME_API KORL_GAME_UPDATE(korl_game_update)
     korl_gui_widgetTextFormat(L"mouseRotateCamera=%hs", fctd_memory->mouseRotateCamera ? "ON" : "OFF");
     korl_gui_widgetTextFormat(L"cameraPositionDistance=%f", korl_math_v3f32_magnitude(&fctd_memory->camera.position));
 #endif
-    korl_gui_windowBegin(L"Connect Flight Controller Bluetooth", NULL, KORL_GUI_WINDOW_STYLE_FLAGS_DEFAULT);
-        if(korl_gui_widgetButtonFormat(L"Query Paired Bluetooth Devices"))
-        {
-            if(fctd_memory->stbDaLastBluetoothQuery)
-                mcarrfree(KORL_C_CAST(void*, fctd_memory->allocatorHeap), fctd_memory->stbDaLastBluetoothQuery);
-            fctd_memory->stbDaLastBluetoothQuery = korl_bluetooth_query(fctd_memory->allocatorHeap);
-        }
-        for(u$ b = 0; b < arrlenu(fctd_memory->stbDaLastBluetoothQuery); b++)
-        {
-            if(korl_gui_widgetButtonFormat(fctd_memory->stbDaLastBluetoothQuery[b].name))
+    if(fctd_memory->bluetoothSocket)
+    {
+        ///@TODO: read data from bluetooth device
+    }
+    else
+    {
+        korl_gui_windowBegin(L"Connect Flight Controller Bluetooth", NULL, KORL_GUI_WINDOW_STYLE_FLAGS_DEFAULT);
+            if(korl_gui_widgetButtonFormat(L"Query Paired Bluetooth Devices"))
             {
-                ///@TODO: ask platform to connect to this device
+                if(fctd_memory->stbDaLastBluetoothQuery)
+                    mcarrfree(KORL_C_CAST(void*, fctd_memory->allocatorHeap), fctd_memory->stbDaLastBluetoothQuery);
+                fctd_memory->stbDaLastBluetoothQuery = korl_bluetooth_query(fctd_memory->allocatorHeap);
             }
-        }
-    korl_gui_windowEnd();
+            for(u$ b = 0; b < arrlenu(fctd_memory->stbDaLastBluetoothQuery); b++)
+            {
+                if(korl_gui_widgetButtonFormat(fctd_memory->stbDaLastBluetoothQuery[b].name))
+                    fctd_memory->bluetoothSocket = korl_bluetooth_connect(&fctd_memory->stbDaLastBluetoothQuery[b]);
+                if(fctd_memory->bluetoothSocket)
+                    break;
+            }
+        korl_gui_windowEnd();
+    }
     korl_gfx_useCamera(fctd_memory->camera);
     Batch*const batchOrigin = korl_gfx_createBatchLines(fctd_memory->allocatorStack, 3);
     korl_gfx_batchSetLine(batchOrigin, 0, KORL_MATH_V3F32_ZERO, {1,0,0}, {255,  0,  0,255});

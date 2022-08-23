@@ -8,4 +8,5 @@ typedef struct GameMemory
     Korl_Memory_AllocatorHandle allocatorHeap;
     bool mouseRotateCamera;
     Korl_Bluetooth_QueryEntry* stbDaLastBluetoothQuery;
+    Korl_Bluetooth_SocketHandle bluetoothSocket;
 } GameMemory;
