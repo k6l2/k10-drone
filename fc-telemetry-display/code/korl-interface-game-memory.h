@@ -1,5 +1,6 @@
 #pragma once
 #include "korl-interface-platform.h"
+#include "korl-stringPool.h"
 typedef struct GameMemory
 {
     bool continueProgramExecution;
@@ -9,4 +10,5 @@ typedef struct GameMemory
     bool mouseRotateCamera;
     Korl_Bluetooth_QueryEntry* stbDaLastBluetoothQuery;
     Korl_Bluetooth_SocketHandle bluetoothSocket;
+    Korl_StringPool stringPool;
 } GameMemory;

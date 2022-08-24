@@ -9,6 +9,10 @@ using Quat  = Korl_Math_Quaternion;
 using Batch = Korl_Gfx_Batch;
 korl_global_variable GameMemory* fctd_memory;
 korl_global_const f32 CAMERA_DISTANCE = 32;
+#ifdef _LOCAL_STRING_POOL_POINTER
+    #undef  _LOCAL_STRING_POOL_POINTER
+#endif
+#define _LOCAL_STRING_POOL_POINTER (&(fctd_memory->stringPool))
 KORL_GAME_API KORL_GAME_ON_RELOAD(korl_game_onReload)
 {
     KORL_INTERFACE_PLATFORM_API_GET(korlApi);
@@ -21,6 +25,7 @@ KORL_GAME_API KORL_GAME_INITIALIZE(korl_game_initialize)
     fctd_memory->camera                   = korl_gfx_createCameraFov(90, 1, 1'000, {CAMERA_DISTANCE,0,0}, KORL_MATH_V3F32_ZERO);
     fctd_memory->allocatorStack           = korl_memory_allocator_create(KORL_MEMORY_ALLOCATOR_TYPE_LINEAR , korl_math_megabytes(8), L"fctd-stack", KORL_MEMORY_ALLOCATOR_FLAG_EMPTY_EVERY_FRAME   , NULL/*auto-select address*/);
     fctd_memory->allocatorHeap            = korl_memory_allocator_create(KORL_MEMORY_ALLOCATOR_TYPE_GENERAL, korl_math_megabytes(8), L"fctd-heap" , KORL_MEMORY_ALLOCATOR_FLAG_SERIALIZE_SAVE_STATE, NULL/*auto-select address*/);
+    fctd_memory->stringPool               = korl_stringPool_create(fctd_memory->allocatorHeap);
     korl_gui_setFontAsset(L"submodules/korl/c/test-assets/source-sans/SourceSans3-Semibold.otf");
 }
 KORL_GAME_API KORL_GAME_ON_KEYBOARD_EVENT(korl_game_onKeyboardEvent)
@@ -98,7 +103,35 @@ KORL_GAME_API KORL_GAME_UPDATE(korl_game_update)
 #endif
     if(fctd_memory->bluetoothSocket)
     {
-        ///@TODO: read data from bluetooth device
+        KORL_ZERO_STACK(au8, bluetoothData);
+        Korl_Bluetooth_ReadResult resultRead;
+        switch(resultRead = korl_bluetooth_read(fctd_memory->bluetoothSocket, fctd_memory->allocatorStack, &bluetoothData))
+        {
+        case KORL_BLUETOOTH_READ_SUCCESS:{
+            if(!bluetoothData.size)
+                break;
+            Korl_StringPool_StringHandle tempString = string_newEmptyUtf16(0);
+            for(u$ i = 0; i < bluetoothData.size; i++)
+                string_appendFormat(tempString, L"0x%02X ", bluetoothData.data[i]);
+            korl_log(VERBOSE, "bluetooth data: {%ws}", string_getRawUtf16(tempString));
+            string_free(tempString);
+            break;}
+        case KORL_BLUETOOTH_READ_DISCONNECT:{
+            fctd_memory->bluetoothSocket = NULL;
+            break;}
+        default:{
+            korl_log(ERROR, "korl_bluetooth_read failed; result=%i", resultRead);
+            break;}
+        }
+        bool flagConnected = true;
+        korl_gui_windowBegin(L"Flight Controller Bluetooth Connection", &flagConnected, KORL_GUI_WINDOW_STYLE_FLAGS_DEFAULT);
+            ///@TODO: add gui to send text data to the flight controller bluetooth modem (textEdit field)
+        korl_gui_windowEnd();
+        if(!flagConnected)
+        {
+            korl_bluetooth_disconnect(fctd_memory->bluetoothSocket);
+            fctd_memory->bluetoothSocket = 0;
+        }
     }
     else
     {
@@ -130,9 +163,11 @@ KORL_GAME_API KORL_GAME_UPDATE(korl_game_update)
 KORL_GAME_API KORL_GAME_ON_ASSET_RELOADED(korl_game_onAssetReloaded)
 {
 }
+#undef _LOCAL_STRING_POOL_POINTER
 #include "korl-math.c"
 #include "korl-checkCast.c"
 #define STB_DS_IMPLEMENTATION
 #define STBDS_UNIT_TESTS // for the sake of detecting any other C++ warnings; we aren't going to actually run any of these tests
 #define STBDS_ASSERT(x) korl_assert(x)
 #include "stb/stb_ds.h"
+#include "korl-stringPool.c"

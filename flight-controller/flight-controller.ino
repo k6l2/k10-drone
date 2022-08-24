@@ -28,7 +28,7 @@
 #include <HMC5883L.h>
 #include <BMP085.h>
 #include <I2Cdev.h>
-static const unsigned long SENSOR_READ_DELTA_MICROSECONDS = 1000;
+static const unsigned long SENSOR_READ_DELTA_MICROSECONDS = 1000000;
 static const int pinBluetoothTx = 2;
 static const int pinBluetoothRx = 3;
 SoftwareSerial bluetooth(pinBluetoothTx, pinBluetoothRx);
@@ -247,8 +247,7 @@ void applyGForceMedianFilter()
 }
 void loop() 
 {
-  const unsigned long deltaMicroseconds = 
-    micros() - lastSensorReadMicroseconds;
+  const unsigned long deltaMicroseconds = micros() - lastSensorReadMicroseconds;
   if(deltaMicroseconds > SENSOR_READ_DELTA_MICROSECONDS)
   {
     motion.getMotion6(&v3Accel.x, &v3Accel.y, &v3Accel.z,
@@ -257,15 +256,24 @@ void loop()
     applyGForceMedianFilter();
     //compass.getHeading(&v3Compass.x, &v3Compass.y, &v3Compass.z);
     updateRelativeOrientation(deltaMicroseconds / 1000000.f);
-    bluetooth.write("FCTP");
-    unsigned long const currMicros = micros();
-    bluetooth.write((uint8_t const*)&currMicros                , sizeof(currMicros));
+    lastSensorReadMicroseconds = micros();
+    bluetooth.write("FCTP");// Flight Controller Telemetry Packet "header"
+    bluetooth.write((uint8_t const*)&lastSensorReadMicroseconds, sizeof(lastSensorReadMicroseconds));
     bluetooth.write((uint8_t const*)&deltaMicroseconds         , sizeof(deltaMicroseconds));
     bluetooth.write((uint8_t const*)&gForce                    , sizeof(gForce));
     bluetooth.write((uint8_t const*)&gForceMedian              , sizeof(gForceMedian));
     bluetooth.write((uint8_t const*)&radiansPerSecond          , sizeof(radiansPerSecond));
     bluetooth.write((uint8_t const*)&relativeOrientationRadians, sizeof(relativeOrientationRadians));
-    lastSensorReadMicroseconds = micros();
+#if 0
+    Serial.write("FCTP");// Flight Controller Telemetry Packet "header"
+    Serial.write((uint8_t const*)&lastSensorReadMicroseconds, sizeof(lastSensorReadMicroseconds));
+    Serial.write((uint8_t const*)&deltaMicroseconds         , sizeof(deltaMicroseconds));
+    Serial.write((uint8_t const*)&gForce                    , sizeof(gForce));
+    Serial.write((uint8_t const*)&gForceMedian              , sizeof(gForceMedian));
+    Serial.write((uint8_t const*)&radiansPerSecond          , sizeof(radiansPerSecond));
+    Serial.write((uint8_t const*)&relativeOrientationRadians, sizeof(relativeOrientationRadians));
+    Serial.println("");
+#endif
   }
   if(bluetooth.available())
   {
